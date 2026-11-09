@@ -1,10 +1,15 @@
 // Offline support: serve the app shell from cache, refresh it in the background.
-const CACHE = 'budget-v1';
+// Bump on every change to a shell file, or installed apps keep the old version.
+const CACHE = 'budget-v2';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'core.js', 'drive.js',
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: 'reload' bypasses the HTTP cache (GitHub Pages sends max-age=600),
+  // so a new version never gets pre-cached with stale files.
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))

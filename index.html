@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f6f5c">
+  <title>Budget</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Budget</h1>
+    <button id="syncBtn" type="button">☁ Sync</button>
+  </header>
+  <nav class="tabs">
+    <button data-tab="month">Month</button>
+    <button data-tab="year">Year plan</button>
+    <button data-tab="cats">Categories</button>
+    <button data-tab="text">Text</button>
+    <button data-tab="sync">Sync</button>
+  </nav>
+  <main id="main"></main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

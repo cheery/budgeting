@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Personal budget data: keep it out of the repo (it lives in local storage / Google Drive)
+budget.txt
+*.budget.txt
+
+# Logs and test output
+*.log
+npm-debug.log*
+coverage/
+
+# Secrets
+.env
+.env.*
+
+# Editor / OS clutter
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db

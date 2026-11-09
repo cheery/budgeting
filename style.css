@@ -137,4 +137,5 @@ body[data-tab=year] main { max-width: 1400px; }
 .catlist li button.icon { padding: 4px; }
 .catlist li select { width: 100%; }
 .catlist li .small { text-align: right; }
+.catlist li button.icon:disabled { opacity: .25; cursor: not-allowed; }
 @media (max-width: 560px) { .catlist li select, .catlist li input { font-size: 14px; } }

@@ -111,3 +111,22 @@ plan 2026 Food 300 all
   assert.deepEqual(core.parse(out).budget, b);
   assert.equal(core.parse('category X expense sure').errors.length, 1);
 });
+
+test('categories in use cannot be deleted', () => {
+  const b = core.parse(SAMPLE).budget;
+  // Salary: 2 plan lines (3500 / 4000) + 1 transaction
+  assert.equal(core.categoryUses(b, 'Salary'), 3);
+  assert.equal(core.deleteCategory(b, 'Salary'), false);
+  assert.ok(b.categories.some(c => c.name === 'Salary'));
+  // Plan-only usage also blocks deletion
+  b.categories.push({ name: 'Gym', type: 'expense', certain: false });
+  core.planRow(b, '2026', 'Gym')[4] = 30;
+  assert.equal(core.categoryUses(b, 'Gym'), 1);
+  assert.equal(core.deleteCategory(b, 'Gym'), false);
+  // Cleared plan row (all zeros) is not a use
+  core.planRow(b, '2026', 'Gym')[4] = 0;
+  assert.equal(core.categoryUses(b, 'Gym'), 0);
+  assert.equal(core.deleteCategory(b, 'Gym'), true);
+  assert.ok(!b.categories.some(c => c.name === 'Gym'));
+  assert.ok(!('Gym' in b.plans['2026']));
+});

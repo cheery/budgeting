@@ -26,7 +26,7 @@ Do this on a test device or browser profile, because it replaces your data there
 
 - **Month**: add, edit and delete transactions. See actual vs. planned spending per category, with progress bars and over-budget warnings.
 - **Year plan**: a grid of categories × 12 months. Use ⇉ to fill a row, or copy last year's plan. It shows planned and actual net per month, cumulative totals, and a chart.
-- **Categories**: add, rename (updates all transactions and plans), delete, and set the type: income, expense, *certain income* or *certain expense*. Certain categories count their planned amount without needing a transaction. You can also set the currency here.
+- **Categories**: add, rename (updates all transactions and plans), delete (only when unused: the `N x` count shows how many plan and transaction lines mention it), and set the type: income, expense, *certain income* or *certain expense*. Certain categories count their planned amount without needing a transaction. You can also set the currency here.
 - **Text**: view and edit the raw file directly. Parse errors are shown with line numbers.
 - **Sync**: Google Drive sync with automatic 3-way merge, so edits from your phone and laptop are combined. You can also download or import the file.
 

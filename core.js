@@ -253,10 +253,21 @@ export function renameCategory(b, from, to) {
   }
 }
 
+// Number of lines in the file that mention the category (besides its own
+// `category` line): one per transaction, one per serialized plan line.
+export function categoryUses(b, name) {
+  let n = b.tx.filter(t => t.cat === name).length;
+  for (const yp of Object.values(b.plans))
+    if (yp[name]) n += new Set(yp[name].filter(x => x)).size;  // = plan lines, see serialize()
+  return n;
+}
+
+// Only unused categories can be deleted, so no data is ever removed by accident.
 export function deleteCategory(b, name) {
+  if (categoryUses(b, name) > 0) return false;
   b.categories = b.categories.filter(c => c.name !== name);
-  b.tx = b.tx.filter(t => t.cat !== name);
-  for (const y of Object.keys(b.plans)) delete b.plans[y][name];
+  for (const y of Object.keys(b.plans)) delete b.plans[y][name];  // all-zero rows
+  return true;
 }
 
 export function copyPlan(b, fromYear, toYear) {

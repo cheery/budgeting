@@ -264,12 +264,13 @@ function renderYear() {
 }
 
 function renderCats() {
-  const used = name => budget.tx.filter(t => t.cat === name).length;
+
+  const uses = budget.categories.map(c => core.categoryUses(budget, c.name));
   const rows = budget.categories.map((c, i) => `<li>
       <input data-rename="${i}" data-focus="cat:${i}" value="${esc(c.name)}">
       <select data-ctype="${i}">${typeOptions(c)}</select>
-      <span class="muted small">${used(c.name)} tx</span>
-      <button class="icon" data-act="delCat" data-i="${i}" title="Delete">✕</button>
+      <span class="muted small" title="Lines in the file that mention this category">${uses[i]} x</span>
+      <button class="icon" data-act="delCat" data-i="${i}" ${uses[i] ? `disabled title="In use: remove its ${uses[i]} plan/transaction line(s) first"` : 'title="Delete"'}>✕</button>
     </li>`).join('');
   return `<h2>Categories</h2>
     <ul class="catlist">${rows}</ul>
@@ -278,6 +279,8 @@ function renderCats() {
       <select name="type">${typeOptions({ type: 'expense' })}</select>
       <button class="primary">Add</button>
     </form>
+    <p class="muted small"><b>N x</b> = number of plan and transaction lines that mention the category.
+      A category can only be deleted when it is not used anywhere.</p>
     <p class="muted small"><b>Certain</b> income/expense: the planned amount counts as actual in any month without
       transactions in that category (e.g. salary, rent). Entering a transaction replaces the automatic amount.</p>
     <h3>Settings</h3>
@@ -439,8 +442,9 @@ const actions = {
   },
   delCat(el) {
     const c = budget.categories[+el.dataset.i];
-    const n = budget.tx.filter(t => t.cat === c.name).length;
-    if (!confirm(`Delete category "${c.name}"${n ? ` and its ${n} transaction(s)` : ''} and its plans?`)) return false;
+    const n = core.categoryUses(budget, c.name);
+    if (n) { alert(`"${c.name}" is used on ${n} line(s) in the plan or transactions. Remove or recategorize those first.`); return false; }
+    if (!confirm(`Delete category "${c.name}"?`)) return false;
     core.deleteCategory(budget, c.name);
     commit(); return false;
   },

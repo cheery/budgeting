@@ -130,3 +130,24 @@ test('categories in use cannot be deleted', () => {
   assert.ok(!b.categories.some(c => c.name === 'Gym'));
   assert.ok(!('Gym' in b.plans['2026']));
 });
+
+test('training lessons: content complete in both languages, checks detect progress', async () => {
+  const learn = await import('../learn.js');
+  for (const l of learn.LESSONS)
+    for (const lang of ['fi', 'en']) {
+      assert.ok(l[lang]?.title && l[lang]?.body, `${l.id} ${lang}`);
+      assert.equal(!!l.fi.tip, !!l.en.tip, `${l.id} tip in both languages`);
+    }
+  assert.deepEqual(Object.keys(learn.UI.fi).sort(), Object.keys(learn.UI.en).sort());
+  const now = new Date(2026, 2, 15);
+  const L = id => learn.LESSONS.find(l => l.id === id);
+  const empty = core.parse('category Salary income').budget;
+  assert.equal(learn.detect(L('income'), empty, now), false);
+  assert.equal(learn.detect(L('why'), empty, now), null);       // manual only
+  const b = core.parse(SAMPLE + 'category Puskuri expense\nplan 2026 Puskuri 50 all\n').budget;
+  assert.equal(learn.detect(L('income'), b, now), true);
+  assert.equal(learn.detect(L('savings'), b, now), true);
+  assert.equal(learn.detect(L('fixed'), b, now), false);        // nothing marked certain
+  assert.equal(learn.detect(L('track'), b, now), true);         // 3 transactions in March
+  assert.equal(learn.detect(L('ahead'), b, now), true);
+});

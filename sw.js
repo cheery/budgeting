@@ -1,7 +1,7 @@
 // Offline support: serve the app shell from cache, refresh it in the background.
 // Bump on every change to a shell file, or installed apps keep the old version.
-const CACHE = 'budget-v3';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'core.js', 'drive.js',
+const CACHE = 'budget-v4';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'core.js', 'drive.js', 'learn.js',
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

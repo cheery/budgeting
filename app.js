@@ -1,11 +1,13 @@
 import * as core from './core.js';
 import * as drive from './drive.js';
+import * as learn from './learn.js';
 
 // ---------- persistence ----------
 
 const K = {
   text: 'budget.text', base: 'budget.syncBase', fileId: 'budget.driveFileId',
   version: 'budget.driveVersion', clientId: 'budget.clientId', lastSync: 'budget.lastSync',
+  lang: 'budget.lang', learn: 'budget.learn',
 };
 const ls = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -92,8 +94,12 @@ function render() {
   document.querySelectorAll('nav.tabs button').forEach(b =>
     b.classList.toggle('on', b.dataset.tab === view.tab));
   document.body.dataset.tab = view.tab;
-  main.innerHTML = { month: renderMonth, year: renderYear, cats: renderCats, text: renderText, sync: renderSync }[view.tab]();
+  main.innerHTML = { month: renderMonth, year: renderYear, cats: renderCats, text: renderText, sync: renderSync, learn: renderLearn }[view.tab]();
   renderSyncButton();
+  document.querySelector('nav button[data-tab=learn]').textContent = T().tab;
+  const back = document.getElementById('backToLesson');
+  back.hidden = !(view.fromLesson && view.tab !== 'learn');
+  back.textContent = T().back;
 
   if (active) {
     const el = main.querySelector(`[data-focus="${CSS.escape(active)}"]`);
@@ -154,7 +160,7 @@ function renderMonth() {
     </li>`;
   }).join('');
 
-  return `
+  return `${learnBanner()}
   <div class="pager">
     <button data-act="prevMonth" aria-label="Previous month">‹</button>
     <h2>${esc(monthTitle(year, month))}</h2>
@@ -295,6 +301,64 @@ function typeOptions(c) {
 }
 const parseType = v => ({ type: v.split(' ')[0], certain: v.endsWith(' certain') });
 
+// ---------- training mode ----------
+
+function lang() {
+  const l = ls.get(K.lang);
+  if (l === 'fi' || l === 'en') return l;
+  return (navigator.language || '').toLowerCase().startsWith('fi') ? 'fi' : 'en';
+}
+const T = () => learn.UI[lang()];
+function learnState() {
+  try { return { done: {}, dismissed: false, ...JSON.parse(ls.get(K.learn) || '{}') }; }
+  catch { return { done: {}, dismissed: false }; }
+}
+function saveLearn(patch) { ls.set(K.learn, JSON.stringify({ ...learnState(), ...patch })); }
+function lessonStatus(l) {
+  const detected = learn.detect(l, budget, today) === true;
+  const manual = !!learnState().done[l.id];
+  return { detected, manual, done: detected || manual };
+}
+const doneCount = () => learn.LESSONS.filter(l => lessonStatus(l).done).length;
+
+function learnBanner() {
+  if (learnState().dismissed || doneCount() > 0) return '';
+  const t = T();
+  return `<div class="panel learnbanner">
+    <span>🎓 ${esc(t.banner)}</span>
+    <span class="actions"><button data-act="dismissLearn">${esc(t.notNow)}</button>
+    <button class="primary" data-act="startLearn">${esc(t.start)}</button></span>
+  </div>`;
+}
+
+function renderLearn() {
+  const t = T(), L = lang(), total = learn.LESSONS.length, n = doneCount();
+  if (view.lesson == null) view.lesson = learn.LESSONS.find(l => !lessonStatus(l).done)?.id || '';
+  const items = learn.LESSONS.map((l, i) => {
+    const c = l[L], st = lessonStatus(l), open = view.lesson === l.id;
+    return `<li class="lesson ${open ? 'open' : ''} ${st.done ? 'done' : ''}" id="lesson-${l.id}">
+      <button class="lhead" data-act="openLesson" data-id="${l.id}" aria-expanded="${open}">
+        <span class="check">${st.done ? '✓' : i + 1}</span><span class="ltitle">${esc(c.title)}</span><span class="chev">${open ? '▾' : '▸'}</span>
+      </button>
+      ${open ? `<div class="lbody">${c.body}
+        ${c.tip ? `<p class="tip"><b>${esc(t.tip)}:</b> ${esc(c.tip)}</p>` : ''}
+        ${st.detected ? `<p class="small pos">✓ ${esc(t.detected)}</p>` : ''}
+        <div class="actions left">
+          ${l.action ? `<button class="primary" data-act="tryLesson" data-id="${l.id}">${esc(t.tryIt)}</button>` : ''}
+          ${st.detected ? '' : `<button data-act="markLesson" data-id="${l.id}">${esc(st.manual ? t.undo : t.markDone)}</button>`}
+          ${i < total - 1 ? `<button class="link" data-act="nextLesson" data-id="${l.id}">${esc(t.next)} →</button>` : ''}
+        </div></div>` : ''}
+    </li>`;
+  }).join('');
+  return `<div class="learnhead"><h2>🎓 ${esc(t.tab)}</h2>
+      <button class="link" data-act="toggleLang">${esc(t.other)}</button></div>
+    <p>${esc(t.intro)}</p>
+    <div class="bar"><div class="income" style="width:${(n / total) * 100}%"></div></div>
+    <p class="small muted">${esc(t.progress(n, total))}</p>
+    <ol class="lessons">${items}</ol>
+    <p class="small muted">${esc(t.disclaimer)}</p>`;
+}
+
 function renderText() {
   return `<h2>Plain text</h2>
     <p class="muted small">This is exactly what's stored and synced. Edit it directly and press Apply.</p>
@@ -406,7 +470,11 @@ async function syncNow() {
 
 document.querySelector('nav.tabs').addEventListener('click', e => {
   const t = e.target.closest('button')?.dataset.tab;
-  if (t) { view.tab = t; view.editTx = null; render(); window.scrollTo(0, 0); }
+  if (t) { if (t === 'learn') view.fromLesson = null; view.tab = t; view.editTx = null; render(); window.scrollTo(0, 0); }
+});
+document.getElementById('backToLesson').addEventListener('click', () => {
+  view.lesson = view.fromLesson; view.fromLesson = null; view.tab = 'learn'; render();
+  document.getElementById('lesson-' + view.lesson)?.scrollIntoView({ block: 'start' });
 });
 document.getElementById('syncBtn').addEventListener('click', () => syncNow());
 
@@ -418,6 +486,30 @@ const actions = {
   nextYear() { view.year++; },
   goYear() { view.tab = 'year'; },
   goCats() { view.tab = 'cats'; },
+  // ---- training mode ----
+  startLearn() { view.tab = 'learn'; view.lesson = null; },
+  dismissLearn() { saveLearn({ dismissed: true }); },
+  toggleLang() { ls.set(K.lang, lang() === 'fi' ? 'en' : 'fi'); },
+  openLesson(el) { view.lesson = view.lesson === el.dataset.id ? '' : el.dataset.id; },
+  markLesson(el) {
+    const done = { ...learnState().done };
+    if (done[el.dataset.id]) delete done[el.dataset.id]; else done[el.dataset.id] = true;
+    saveLearn({ done });
+  },
+  nextLesson(el) {
+    const i = learn.LESSONS.findIndex(l => l.id === el.dataset.id);
+    view.lesson = learn.LESSONS[i + 1]?.id || '';
+    setTimeout(() => document.getElementById('lesson-' + view.lesson)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 0);
+  },
+  tryLesson(el) {
+    const a = learn.LESSONS.find(l => l.id === el.dataset.id).action;
+    view.fromLesson = el.dataset.id;
+    view.tab = a.tab;
+    view.year = today.getFullYear(); view.month = today.getMonth();
+    if (a.prevMonth) actions.prevMonth();
+    window.scrollTo(0, 0);
+    if (a.focus) setTimeout(() => main.querySelector(`input[name=${a.focus}]`)?.focus(), 0);
+  },
   editTx(el) { view.editTx = budget.tx[+el.dataset.i]; window.scrollTo({ top: document.getElementById('txForm').offsetTop - 70, behavior: 'smooth' }); },
   cancelEdit() { view.editTx = null; },
   delTx(el) {

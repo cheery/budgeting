@@ -33,6 +33,17 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
   because GitHub Pages sends `max-age=600`.
 - Float sums: round money totals to cents (`Math.round(x * 100) / 100`).
 
+## Training mode (`learn.js`)
+
+- Every lesson and every `UI` string exists in both `fi` and `en`. A test enforces matching keys
+  and tips, so add both languages together.
+- The core message comes from the user's own finance advisor: a budget lets you know in advance
+  whether problems are coming, it increases control over your life, and it makes money a
+  resource. Keep the lessons built around these ideas, warm and non-judgmental.
+- Lesson text refers to UI labels in English (the app UI is English only). Update the lessons if
+  labels such as "Year plan", "Certain income" or "Cumulative plan" change.
+- Learning progress is stored per device in localStorage (`budget.learn`), never in `budget.txt`.
+
 ## Data and privacy
 
 - Never commit a real `budget.txt`. It's gitignored. The only exception is `examples/budget.txt`,

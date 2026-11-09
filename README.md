@@ -28,6 +28,7 @@ Do this on a test device or browser profile, because it replaces your data there
 - **Year plan**: a grid of categories × 12 months. Use ⇉ to fill a row, or copy last year's plan. It shows planned and actual net per month, cumulative totals, and a chart.
 - **Categories**: add, rename (updates all transactions and plans), delete (only when unused: the `N x` count shows how many plan and transaction lines mention it), and set the type: income, expense, *certain income* or *certain expense*. Certain categories count their planned amount without needing a transaction. You can also set the currency here.
 - **Text**: view and edit the raw file directly. Parse errors are shown with line numbers.
+- **Learn / Opi**: a light training mode in English and Finnish. Eight short lessons teach how to budget and why: you *know in advance whether problems are coming*, it gives you *more control over your life*, and *money becomes a resource*. "Try it" jumps to the right place in the app, and progress is ticked automatically when your budget shows the step is done. A fresh install shows a small invitation to start the lessons.
 - **Sync**: Google Drive sync with automatic 3-way merge, so edits from your phone and laptop are combined. You can also download or import the file.
 
 ## File format
@@ -103,5 +104,6 @@ How the sync works:
 | `app.js` | UI, local storage, sync orchestration |
 | `core.js` | Text format parser/serializer, merge, statistics (no DOM) |
 | `drive.js` | Google sign-in and Drive REST calls |
+| `learn.js` | Training-mode lessons (fi/en) and progress checks (no DOM) |
 | `sw.js`, `manifest.webmanifest`, `icon*` | Offline support and installability |
 | `test/core.test.mjs` | Unit tests: `npm test` |

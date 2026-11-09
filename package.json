@@ -5,5 +5,6 @@
   "scripts": {
     "test": "node --test test/core.test.mjs",
     "start": "python3 -m http.server 8000"
-  }
+  },
+  "license": "MIT"
 }

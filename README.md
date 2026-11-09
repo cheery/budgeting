@@ -112,3 +112,7 @@ How the sync works:
 | `learn.js` | Training-mode lessons (fi/en) and progress checks (no DOM) |
 | `sw.js`, `manifest.webmanifest`, `icon*` | Offline support and installability |
 | `test/core.test.mjs` | Unit tests: `npm test` |
+
+## License
+
+MIT. See [LICENSE](LICENSE).

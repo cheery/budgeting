@@ -6,6 +6,22 @@ It also works offline.
 
 All data is one **plain-text file**, `budget.txt`. You can sync it through **Google Drive**.
 
+## Screenshots
+
+> **Note:** these screenshots show an **imaginary sample budget** ([`examples/budget.txt`](examples/budget.txt)).
+> All names, amounts and transactions in it are made up. It is not anyone's real finances.
+
+| Month (desktop) | Year plan |
+|---|---|
+| ![Month view with imaginary sample data](docs/screenshots/month-desktop.png) | ![Year plan with imaginary sample data](docs/screenshots/year-desktop.png) |
+
+| Month (phone) | Categories (phone) | Dark mode, July (phone) |
+|---|---|---|
+| ![Month view on a phone, imaginary data](docs/screenshots/month-mobile.png) | ![Categories on a phone, imaginary data](docs/screenshots/categories-mobile.png) | ![Dark mode, imaginary data](docs/screenshots/july-mobile-dark.png) |
+
+To try the sample yourself, paste `examples/budget.txt` into the **Text** tab and press Apply.
+Do this on a test device or browser profile, because it replaces your data there.
+
 ## Features
 
 - **Month**: add, edit and delete transactions. See actual vs. planned spending per category, with progress bars and over-budget warnings.

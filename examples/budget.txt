@@ -1,0 +1,227 @@
+# ==============================================================
+# SAMPLE DATA - THIS BUDGET IS IMAGINARY.
+# All names, amounts and transactions are made up for demo and
+# screenshot purposes. It does not describe anyone's real finances.
+# ==============================================================
+
+currency EUR
+
+category Salary income certain
+category "Side projects" income
+category Rent expense certain
+category "Phone & internet" expense certain
+category Insurance expense certain
+category Groceries expense
+category Electricity expense
+category Transport expense
+category "Eating out" expense
+category Entertainment expense
+category Health expense
+category Clothing expense
+category Holidays expense
+category Savings expense
+
+plan 2026 Salary 3200 all
+# June includes an (imaginary) holiday bonus
+plan 2026 Salary 4800 6
+plan 2026 "Side projects" 300 3,6,9,12
+plan 2026 Rent 980 all
+plan 2026 "Phone & internet" 45 all
+plan 2026 Insurance 210 2,5,8,11
+plan 2026 Groceries 420 all
+plan 2026 Electricity 70 4-9
+plan 2026 Electricity 110 1-3,10-12
+plan 2026 Transport 60 all
+plan 2026 "Eating out" 120 all
+plan 2026 Entertainment 80 all
+plan 2026 Health 40 all
+plan 2026 Clothing 150 4,10
+plan 2026 Holidays 1400 7
+plan 2026 Savings 500 all
+
+
+# ---- 2026-01 ----
+2026-01-01 Rent 980
+2026-01-01 Groceries 72.37 supermarket
+2026-01-02 Transport 59 monthly travel card
+2026-01-04 Groceries 66.33 supermarket
+2026-01-05 Savings 500 to savings account
+2026-01-05 Groceries 27.09 market hall
+2026-01-08 Groceries 41.29 supermarket
+2026-01-09 Groceries 64.29 weekly shop
+2026-01-12 Electricity 119.65
+2026-01-23 "Eating out" 31.33 cafe
+2026-01-24 Groceries 40.43 corner shop
+2026-01-25 Salary 3200
+2026-01-25 Groceries 81.66 supermarket
+2026-01-25 Health 40.24 pharmacy
+
+# ---- 2026-02 ----
+2026-02-01 Rent 980
+2026-02-02 Groceries 33.74 weekly shop
+2026-02-02 Transport 59 monthly travel card
+2026-02-03 Insurance 210 home insurance (quarterly)
+2026-02-05 Savings 500 to savings account
+2026-02-09 Groceries 30.52 corner shop
+2026-02-09 "Eating out" 40.06 cafe
+2026-02-12 Electricity 106.81
+2026-02-12 Groceries 83.06 corner shop
+2026-02-15 Groceries 65.41 supermarket
+2026-02-15 "Eating out" 20.67 cafe
+2026-02-18 Groceries 28.21 market hall
+2026-02-20 Groceries 79.11 supermarket
+2026-02-25 Salary 3200
+2026-02-28 Groceries 84.87 supermarket
+
+# ---- 2026-03 ----
+2026-03-01 Rent 980
+2026-03-02 Transport 59 monthly travel card
+2026-03-03 Groceries 36.44 weekly shop
+2026-03-05 Savings 500 to savings account
+2026-03-06 Groceries 43.90 market hall
+2026-03-08 Groceries 72.92 supermarket
+2026-03-08 Health 70.87 gym visit
+2026-03-12 Electricity 134.36
+2026-03-18 "Side projects" 410 freelance invoice
+2026-03-18 Groceries 41.03 supermarket
+2026-03-20 Groceries 81.35 weekly shop
+2026-03-21 Groceries 43.74 market hall
+2026-03-21 "Eating out" 34.47 dinner with friends
+2026-03-25 Salary 3200
+2026-03-28 Groceries 88.92 corner shop
+
+# ---- 2026-04 ----
+2026-04-01 Rent 980
+2026-04-02 Transport 59 monthly travel card
+2026-04-04 "Eating out" 45.51 cafe
+2026-04-05 Savings 500 to savings account
+2026-04-05 Groceries 60.67 supermarket
+2026-04-08 Groceries 77.90 supermarket
+2026-04-12 Electricity 64.28
+2026-04-12 Groceries 35.70 market hall
+2026-04-13 Groceries 80.45 weekly shop
+2026-04-14 Groceries 66.75 weekly shop
+2026-04-14 Clothing 185.38 seasonal clothes
+2026-04-19 Groceries 51.71 weekly shop
+2026-04-22 "Eating out" 18.57 dinner with friends
+2026-04-24 "Eating out" 50.28 cafe
+2026-04-25 Salary 3200
+2026-04-28 Groceries 62.04 supermarket
+
+# ---- 2026-05 ----
+2026-05-01 Rent 980
+2026-05-02 Transport 59 monthly travel card
+2026-05-03 Insurance 210 home insurance (quarterly)
+2026-05-03 "Eating out" 47.46 pizza night
+2026-05-04 Groceries 45.89 market hall
+2026-05-05 Savings 500 to savings account
+2026-05-06 Groceries 35.70 market hall
+2026-05-09 Groceries 62.76 supermarket
+2026-05-12 Electricity 83.59
+2026-05-16 "Eating out" 52.82 pizza night
+2026-05-17 Groceries 66.93 weekly shop
+2026-05-17 Entertainment 53.62 streaming
+2026-05-21 Groceries 26.36 corner shop
+2026-05-24 "Eating out" 19.26 dinner with friends
+2026-05-25 Salary 3200
+2026-05-25 Groceries 86.51 corner shop
+2026-05-27 Groceries 41.76 market hall
+
+# ---- 2026-06 ----
+2026-06-01 Rent 980
+2026-06-02 Transport 59 monthly travel card
+2026-06-03 "Eating out" 51.12 cafe
+2026-06-05 Savings 500 to savings account
+2026-06-07 Groceries 94.66 corner shop
+2026-06-10 Groceries 55.67 weekly shop
+2026-06-12 Electricity 85.26
+2026-06-13 Groceries 33.47 market hall
+2026-06-23 Groceries 29.48 supermarket
+2026-06-24 Salary 4800
+2026-06-24 Groceries 66.18 market hall
+2026-06-25 Groceries 66.19 supermarket
+2026-06-26 Groceries 29.97 supermarket
+
+# ---- 2026-07 ----
+2026-07-01 Rent 980
+2026-07-02 Transport 59 monthly travel card
+2026-07-05 Savings 500 to savings account
+2026-07-05 Groceries 58.09 weekly shop
+2026-07-07 Groceries 81.52 market hall
+2026-07-08 "Eating out" 21.86 dinner with friends
+2026-07-08 Holidays 1250 imaginary summer trip
+2026-07-12 Electricity 64.77
+2026-07-16 Groceries 31.60 weekly shop
+2026-07-18 Groceries 49.80 weekly shop
+2026-07-19 Groceries 57.69 supermarket
+2026-07-20 Holidays 230 train tickets
+2026-07-23 Groceries 72.14 supermarket
+2026-07-24 Groceries 29.24 corner shop
+2026-07-25 Salary 3200
+
+# ---- 2026-08 ----
+2026-08-01 Rent 980
+2026-08-02 Groceries 94.95 supermarket
+2026-08-02 Transport 59 monthly travel card
+2026-08-03 Insurance 210 home insurance (quarterly)
+2026-08-03 Groceries 92.83 market hall
+2026-08-04 Groceries 36.64 weekly shop
+2026-08-05 Savings 500 to savings account
+2026-08-08 Groceries 58.70 weekly shop
+2026-08-10 "Eating out" -12.50 refund
+2026-08-12 Electricity 64.77
+2026-08-14 "Eating out" 53.25 dinner with friends
+2026-08-15 Groceries 88.17 market hall
+2026-08-18 Groceries 51.53 weekly shop
+2026-08-21 Groceries 43.56 weekly shop
+2026-08-23 "Eating out" 20.35 cafe
+2026-08-25 Salary 3200
+
+# ---- 2026-09 ----
+2026-09-01 Rent 980
+2026-09-02 Groceries 60.20 market hall
+2026-09-02 Transport 59 monthly travel card
+2026-09-05 Savings 500 to savings account
+2026-09-11 Groceries 28.98 supermarket
+2026-09-11 "Eating out" 23.79 dinner with friends
+2026-09-12 Electricity 79.18
+2026-09-16 Groceries 84.59 supermarket
+2026-09-17 "Eating out" 41.46 cafe
+2026-09-18 "Side projects" 410 freelance invoice
+2026-09-19 Groceries 66.65 market hall
+2026-09-19 "Eating out" 52.32 pizza night
+2026-09-24 Groceries 53.26 market hall
+2026-09-25 Salary 3200
+2026-09-25 Groceries 65.52 supermarket
+2026-09-28 Groceries 68.36 weekly shop
+
+# ---- 2026-10 ----
+2026-10-01 Rent 980
+2026-10-01 Groceries 94.73 supermarket
+2026-10-02 Transport 59 monthly travel card
+2026-10-03 Groceries 62.63 corner shop
+2026-10-05 Savings 500 to savings account
+2026-10-05 Entertainment 45.88 concert ticket
+2026-10-10 "Eating out" 24.84 lunch
+2026-10-11 Groceries 34.27 corner shop
+2026-10-12 Electricity 102.85
+2026-10-14 Clothing 175.29 seasonal clothes
+2026-10-15 Groceries 86.66 market hall
+2026-10-18 "Eating out" 52.50 pizza night
+2026-10-18 Entertainment 23.62 concert ticket
+2026-10-19 Groceries 50.87 market hall
+2026-10-20 Groceries 55.67 corner shop
+2026-10-25 Salary 3200
+2026-10-25 Groceries 67.82 supermarket
+2026-10-27 "Eating out" 52.20 lunch
+
+# ---- 2026-11 ----
+2026-11-01 Rent 980
+2026-11-02 Groceries 25.25 market hall
+2026-11-02 Transport 59 monthly travel card
+2026-11-03 Insurance 210 home insurance (quarterly)
+2026-11-03 Groceries 69.60 corner shop
+2026-11-05 Savings 500 to savings account
+2026-11-05 "Eating out" 28.95 lunch
+2026-11-08 Entertainment 15.14 streaming
+2026-11-09 Groceries 36.31 weekly shop

@@ -21,3 +21,6 @@ coverage/
 *~
 .DS_Store
 Thumbs.db
+
+# ...except the imaginary sample used for demos and screenshots
+!examples/budget.txt

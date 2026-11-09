@@ -132,3 +132,9 @@ code { font-size: 13px; }
 body[data-tab=year] main { max-width: 1400px; }
 .tag { font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--cur); color: var(--accent); vertical-align: 1px; }
 .catrow.auto .bar > div { opacity: .55; }
+.catlist li { display: grid; grid-template-columns: 1fr 9.6em 2.9em auto; gap: 6px; }
+.catlist li select { padding-right: 4px; }
+.catlist li button.icon { padding: 4px; }
+.catlist li select { width: 100%; }
+.catlist li .small { text-align: right; }
+@media (max-width: 560px) { .catlist li select, .catlist li input { font-size: 14px; } }

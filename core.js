@@ -288,7 +288,7 @@ export function monthStats(b, year, m) {
       actual: auto ? planned : Math.round((actual[c.name] || 0) * 100) / 100,
     };
   });
-  const sum = (type, key) => rows.filter(r => r.type === type).reduce((s, r) => s + r[key], 0);
+  const sum = (type, key) => Math.round(rows.filter(r => r.type === type).reduce((s, r) => s + r[key], 0) * 100) / 100;
   return {
     rows,
     income: { planned: sum('income', 'planned'), actual: sum('income', 'actual') },

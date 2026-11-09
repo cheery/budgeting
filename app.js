@@ -213,9 +213,9 @@ function renderYear() {
       <tr class="sum"><th class="sticky">Total ${type}</th>${tot.map(v => `<td>${money0(v)}</td>`).join('')}<td>${money0(tot.reduce((a, b) => a + b, 0))}</td></tr>`;
   };
 
+  const future = m => view.year > today.getFullYear() || (curM !== -1 && m > curM);
   let cum = 0, cumP = 0;
   const pNet = stats.map(s => s.plannedNet);
-  const future = m => view.year > today.getFullYear() || (curM !== -1 && m > curM);
   const aNet = stats.map((s, m) => future(m) ? null : s.actualNet);
   const cumPlan = pNet.map(v => (cumP += v));
   const cumAct = aNet.map(v => v == null ? null : (cum += v));
@@ -227,9 +227,9 @@ function renderYear() {
   const chart = stats.map((s, m) => `<div class="col ${m === curM ? 'cur' : ''}" title="${months[m]}">
       <div class="bars">
         <div class="b inc" style="height:${(s.income.planned / maxAbs) * 100}%"></div>
-        <div class="b incA" style="height:${(s.income.actual / maxAbs) * 100}%"></div>
+        <div class="b incA" style="height:${future(m) ? 0 : (s.income.actual / maxAbs) * 100}%"></div>
         <div class="b exp" style="height:${(s.expense.planned / maxAbs) * 100}%"></div>
-        <div class="b expA" style="height:${(s.expense.actual / maxAbs) * 100}%"></div>
+        <div class="b expA" style="height:${future(m) ? 0 : (s.expense.actual / maxAbs) * 100}%"></div>
       </div><div class="small">${months[m][0]}</div></div>`).join('');
 
   return `

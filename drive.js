@@ -7,6 +7,10 @@ const API = 'https://www.googleapis.com/drive/v3';
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3';
 
 let tokenClient = null;
+
+// Errors carry a `key`/`args` so the UI can translate them (i18n.js `err.*`).
+function driveErr(key, args, msg) { const e = new Error(msg); e.key = key; e.args = args; return e; }
+const expired = () => driveErr('expired', [], 'Google session expired; tap Sync to sign in again');
 // Token is kept for its lifetime (~1h) so reloads don't need a new sign-in.
 let token = null, tokenExpiry = 0;
 try { ({ token, tokenExpiry } = JSON.parse(localStorage.getItem('budget.driveToken')) || {}); } catch {}
@@ -20,7 +24,7 @@ function loadGis() {
     const s = document.createElement('script');
     s.src = 'https://accounts.google.com/gsi/client';
     s.onload = resolve;
-    s.onerror = () => reject(new Error('Could not load Google sign-in (offline?)'));
+    s.onerror = () => reject(driveErr('gisLoad', [], 'Could not load Google sign-in (offline?)'));
     document.head.appendChild(s);
   });
 }
@@ -62,8 +66,8 @@ async function call(url, opts = {}) {
     ...opts,
     headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) },
   });
-  if (res.status === 401) { token = null; saveToken(); throw new Error('Google session expired; tap Sync to sign in again'); }
-  if (!res.ok) throw new Error(`Drive error ${res.status}: ${await res.text()}`);
+  if (res.status === 401) { token = null; saveToken(); throw expired(); }
+  if (!res.ok) throw driveErr('drive', [res.status], `Drive error ${res.status}: ${await res.text()}`);
   return res;
 }
 
@@ -78,8 +82,8 @@ export async function getMeta(id) {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (r.status === 404) return null;
-  if (r.status === 401) { token = null; saveToken(); throw new Error('Google session expired; tap Sync to sign in again'); }
-  if (!r.ok) throw new Error(`Drive error ${r.status}`);
+  if (r.status === 401) { token = null; saveToken(); throw expired(); }
+  if (!r.ok) throw driveErr('drive', [r.status], `Drive error ${r.status}`);
   const m = await r.json();
   return m.trashed ? null : m;
 }

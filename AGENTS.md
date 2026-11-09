@@ -33,6 +33,17 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
   because GitHub Pages sends `max-age=600`.
 - Float sums: round money totals to cents (`Math.round(x * 100) / 100`).
 
+## Languages (`i18n.js`)
+
+- The UI is Finnish and English. **All user-visible text goes through `t('key')`**, including
+  titles, placeholders, aria-labels, confirm/alert dialogs, and the sync button. A test enforces
+  that both languages have the same keys.
+- Errors from `core.js`/`drive.js` carry `key` + `args` and are shown with `errorText()`. When you
+  add a new error, add an `err.<key>` translation too.
+- The **file format stays English** (`category`, `plan`, `income`, …) so the same `budget.txt` works
+  in every language. Never translate keywords in `core.js`.
+- Formatting uses `LOCALE[lang]` (fi-FI / en-GB). Until the user picks a language, it follows the browser.
+
 ## Training mode (`learn.js`)
 
 - Every lesson and every `UI` string exists in both `fi` and `en`. A test enforces matching keys
@@ -40,8 +51,8 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
 - The core message comes from the user's own finance advisor: a budget lets you know in advance
   whether problems are coming, it increases control over your life, and it makes money a
   resource. Keep the lessons built around these ideas, warm and non-judgmental.
-- Lesson text refers to UI labels in English (the app UI is English only). Update the lessons if
-  labels such as "Year plan", "Certain income" or "Cumulative plan" change.
+- Lessons refer to UI labels with `{i18n.key}` placeholders (e.g. `{tab.year}`), never with
+  hard-coded label text, so they always match what the UI shows.
 - Learning progress is stored per device in localStorage (`budget.learn`), never in `budget.txt`.
 
 ## Data and privacy

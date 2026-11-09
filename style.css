@@ -25,7 +25,10 @@ header {
 header h1 { font-size: 18px; margin: 0; }
 #syncBtn { background: rgba(255,255,255,.18); color: inherit; border: 0; }
 #syncBtn.error { background: var(--neg); color: #fff; }
-#syncBtn.localchanges { background: rgba(255,255,255,.35); }
+#syncBtn.local { background: rgba(255,255,255,.35); }
+.hbtns { display: flex; gap: 8px; align-items: center; }
+#langSel { width: auto; background: rgba(255,255,255,.18); color: inherit; border: 0; padding: 8px 6px; }
+#langSel option { color: #1d2321; background: #fff; }
 nav.tabs {
   position: sticky; top: 0; z-index: 5; display: flex; overflow-x: auto;
   background: var(--panel); border-bottom: 1px solid var(--line);

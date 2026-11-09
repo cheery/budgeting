@@ -10,7 +10,6 @@ import * as core from './core.js';
 
 export const UI = {
   en: {
-    tab: 'Learn',
     intro: 'A budget is a plan for your money. These short lessons show how to make one with this app, and why it’s worth it. Each takes a minute or two.',
     progress: (n, t) => `${n} of ${t} done`,
     tryIt: 'Try it →',
@@ -20,7 +19,6 @@ export const UI = {
     detected: 'Done: detected from your budget',
     done: 'Done',
     tip: 'Tip',
-    other: 'Suomeksi',
     banner: 'New to budgeting? Learn how in 8 short steps.',
     start: 'Start',
     notNow: 'Not now',
@@ -28,7 +26,6 @@ export const UI = {
     disclaimer: 'General guidance, not personal financial advice.',
   },
   fi: {
-    tab: 'Opi',
     intro: 'Budjetti on suunnitelma rahoillesi. Näissä lyhyissä oppitunneissa näet, miten sellainen tehdään tällä sovelluksella ja miksi se kannattaa. Kukin vie minuutin tai kaksi.',
     progress: (n, t) => `${n}/${t} tehty`,
     tryIt: 'Kokeile →',
@@ -38,7 +35,6 @@ export const UI = {
     detected: 'Tehty: tunnistettu budjetistasi',
     done: 'Tehty',
     tip: 'Vinkki',
-    other: 'In English',
     banner: 'Uusi budjetoinnissa? Opi se 8 lyhyessä vaiheessa.',
     start: 'Aloita',
     notNow: 'Ei nyt',
@@ -69,6 +65,8 @@ export function detect(lesson, budget, now = new Date()) {
 
 // ---------- lessons ----------
 // `action` tells the app where "Try it" goes. Body text is trusted static HTML.
+// {key} placeholders are replaced with the current translation of that i18n.js key,
+// so lessons always name buttons and views exactly as the UI shows them.
 
 export const LESSONS = [
   {
@@ -109,11 +107,11 @@ export const LESSONS = [
         <p>Write down everything that comes in during a month: salary, benefits, pension, student grant,
         regular side income. Use the amount that actually lands in your account, after taxes.</p>
         <p>Income you can count on, such as salary or a regular benefit, is <b>certain income</b>. In
-        <b>Categories</b>, set its type to <i>Certain income</i>. The app then counts it automatically every
+        <b>{tab.cats}</b>, set its type to <i>{type.incomeCertain}</i>. The app then counts it automatically every
         month, even before the money has arrived.</p>
         <p>If your income varies, plan with a cautious estimate. A pleasant surprise is better than an
         unpleasant one.</p>`,
-      tip: 'Open Year plan and enter your income for each month. ⇉ copies a value to all months.',
+      tip: 'Open {tab.year} and enter your income for each month. ⇉ copies a value to all months.',
     },
     fi: {
       title: 'Aloita tuloista',
@@ -121,10 +119,10 @@ export const LESSONS = [
         <p>Kirjaa kaikki, mitä kuukaudessa tulee: palkka, etuudet, eläke, opintoraha, säännölliset sivutulot.
         Käytä summaa, joka oikeasti tulee tilille verojen jälkeen.</p>
         <p>Tulot, joihin voit luottaa, kuten palkka tai säännöllinen etuus, ovat <b>varmoja tuloja</b>. Valitse
-        <b>Categories</b>-välilehdellä luokan tyypiksi <i>Certain income</i> (varma tulo). Silloin sovellus
+        <b>{tab.cats}</b>-välilehdellä luokan tyypiksi <i>{type.incomeCertain}</i>. Silloin sovellus
         laskee sen automaattisesti joka kuukausi, jo ennen kuin raha on tullut tilille.</p>
         <p>Jos tulosi vaihtelevat, suunnittele varovaisen arvion mukaan. Iloinen yllätys on parempi kuin ikävä.</p>`,
-      tip: 'Avaa Year plan ja kirjaa tulosi jokaiselle kuukaudelle. ⇉ kopioi summan kaikille kuukausille.',
+      tip: 'Avaa {tab.year} ja kirjaa tulosi jokaiselle kuukaudelle. ⇉ kopioi summan kaikille kuukausille.',
     },
   },
   {
@@ -135,7 +133,7 @@ export const LESSONS = [
       body: `
         <p>Fixed costs are bills that come whether you like it or not: rent, electricity, phone and internet,
         insurance, loan payments, daycare.</p>
-        <p>Set their type to <i>Certain expense</i>. The budget then assumes they will be paid, because they will be.</p>
+        <p>Set their type to <i>{type.expenseCertain}</i>. The budget then assumes they will be paid, because they will be.</p>
         <p>Watch out for bills that don’t come every month: quarterly insurance, a yearly subscription, a car
         inspection. Plan them in the <b>month they are actually due</b>. Then the plan warns you about the
         expensive months before they arrive.</p>`,
@@ -146,7 +144,7 @@ export const LESSONS = [
       body: `
         <p>Kiinteät menot ovat laskuja, jotka tulevat halusit tai et: vuokra, sähkö, puhelin ja netti,
         vakuutukset, lainanlyhennykset, päivähoito.</p>
-        <p>Valitse niiden tyypiksi <i>Certain expense</i> (varma meno). Silloin budjetti olettaa, että ne
+        <p>Valitse niiden tyypiksi <i>{type.expenseCertain}</i>. Silloin budjetti olettaa, että ne
         maksetaan, kuten ne maksetaankin.</p>
         <p>Muista laskut, jotka eivät tule joka kuukausi: neljännesvuosittain maksettava vakuutus, vuosimaksu,
         auton katsastus. Kirjaa ne siihen <b>kuukauteen, jolloin ne oikeasti erääntyvät</b>. Silloin
@@ -206,11 +204,11 @@ export const LESSONS = [
       title: 'Look ahead: are problems coming?',
       body: `
         <p>This is where a budget really pays off. Plan the whole year, then look at the bottom rows of
-        <b>Year plan</b>:</p>
+        <b>{tab.year}</b>:</p>
         <ul>
-          <li><b>Planned net</b> shows whether each month ends in plus or minus. Red means that month spends
+          <li><b>{year.plannedNet}</b> shows whether each month ends in plus or minus. Red means that month spends
           more than it earns.</li>
-          <li><b>Cumulative plan</b> shows how things develop over the year. If it turns red, you will run out
+          <li><b>{year.cumPlan}</b> shows how things develop over the year. If it turns red, you will run out
           of money at that point unless something changes.</li>
         </ul>
         <p>A red month isn’t a disaster. It’s a warning that arrives in time: you can save beforehand, move an
@@ -223,11 +221,11 @@ export const LESSONS = [
       title: 'Katso eteenpäin: onko tulossa ongelmia?',
       body: `
         <p>Tässä budjetti todella maksaa itsensä takaisin. Suunnittele koko vuosi ja katso sitten
-        <b>Year plan</b> -näkymän alimpia rivejä:</p>
+        <b>{tab.year}</b>-näkymän alimpia rivejä:</p>
         <ul>
-          <li><b>Planned net</b> (suunniteltu tulos) näyttää, jääkö kuukausi plussalle vai miinukselle. Punainen
+          <li><b>{year.plannedNet}</b> näyttää, jääkö kuukausi plussalle vai miinukselle. Punainen
           tarkoittaa, että kuukauden menot ovat tuloja suuremmat.</li>
-          <li><b>Cumulative plan</b> (kertymä) näyttää, miten tilanne kehittyy vuoden mittaan. Jos se muuttuu
+          <li><b>{year.cumPlan}</b> näyttää, miten tilanne kehittyy vuoden mittaan. Jos se muuttuu
           punaiseksi, rahat loppuvat siinä kohtaa, ellei jokin muutu.</li>
         </ul>
         <p>Punainen kuukausi ei ole katastrofi. Se on varoitus, joka tulee ajoissa: voit säästää etukäteen,
@@ -245,7 +243,7 @@ export const LESSONS = [
       body: `
         <p>Enter expenses as they happen. On a phone it takes seconds. Many people find it easiest to do it right
         away, or once a day in the evening.</p>
-        <p>The <b>Month</b> view shows how much is left in each category. When a bar turns red, that category is
+        <p>The <b>{tab.month}</b> view shows how much is left in each category. When a bar turns red, that category is
         over plan. That’s information, not failure: decide whether to spend less somewhere else, or accept it.</p>
         <p>Certain categories are counted automatically, so you only need to enter them when the amount is
         different from the plan.</p>`,
@@ -255,7 +253,7 @@ export const LESSONS = [
       body: `
         <p>Kirjaa menot sitä mukaa kuin niitä tulee. Puhelimella se vie sekunteja. Monelle helpointa on kirjata
         heti tai kerran päivässä illalla.</p>
-        <p><b>Month</b>-näkymä näyttää, paljonko kussakin luokassa on jäljellä. Kun palkki muuttuu punaiseksi,
+        <p><b>{tab.month}</b>-näkymä näyttää, paljonko kussakin luokassa on jäljellä. Kun palkki muuttuu punaiseksi,
         luokan suunnitelma on ylittynyt. Se on tietoa eikä epäonnistumista: päätä, säästätkö jostain muualta vai
         hyväksytkö sen.</p>
         <p>Varmat luokat lasketaan automaattisesti, joten ne tarvitsee kirjata vain, jos summa poikkeaa

@@ -10,6 +10,14 @@ export function emptyBudget() {
   return { currency: 'EUR', categories: [], plans: {}, tx: [] };
 }
 
+// Errors carry a `key` and `args` so the UI can translate them (see i18n.js `err.*`).
+function fail(key, args, msg) {
+  const e = new Error(msg);
+  e.key = key; e.args = args;
+  throw e;
+}
+const errEntry = (line, e) => ({ line, msg: e.message, key: e.key, args: e.args });
+
 // ---------- tokenizing ----------
 
 function tokenize(line) {
@@ -26,7 +34,7 @@ function tokenize(line) {
         if (line[i] === '\\' && i + 1 < line.length) i++;
         s += line[i++];
       }
-      if (i >= line.length) throw new Error('Unterminated quote');
+      if (i >= line.length) fail('quote', [], 'Unterminated quote');
       i++;
       toks.push({ v: s, end: i });
     } else {
@@ -44,7 +52,7 @@ export function quote(name) {
 
 export function parseAmount(s) {
   const n = Number(String(s).trim().replace(/\s/g, '').replace(',', '.'));
-  if (String(s).trim() === '' || !Number.isFinite(n)) throw new Error(`Bad amount "${s}"`);
+  if (String(s).trim() === '' || !Number.isFinite(n)) fail('amount', [s], `Bad amount "${s}"`);
   return Math.round(n * 100) / 100;
 }
 
@@ -57,9 +65,9 @@ function parseMonths(s) {
   const out = new Set();
   for (const part of s.split(',')) {
     const m = part.match(/^(\d{1,2})(?:-(\d{1,2}))?$/);
-    if (!m) throw new Error(`Bad month list "${s}"`);
+    if (!m) fail('months', [s], `Bad month list "${s}"`);
     const a = +m[1], b = m[2] ? +m[2] : a;
-    if (a < 1 || b > 12 || a > b) throw new Error(`Bad month range "${part}"`);
+    if (a < 1 || b > 12 || a > b) fail('months', [part], `Bad month range "${part}"`);
     for (let k = a; k <= b; k++) out.add(k - 1);
   }
   return [...out];
@@ -91,7 +99,7 @@ export function parse(text) {
     try {
       records.push({ ln: idx + 1, line, toks: tokenize(line) });
     } catch (e) {
-      errors.push({ line: idx + 1, msg: e.message });
+      errors.push(errEntry(idx + 1, e));
     }
   });
 
@@ -106,7 +114,7 @@ export function parse(text) {
   };
   const useCat = (name, ln) => {
     if (!catMap.has(name)) {
-      errors.push({ line: ln, msg: `Category "${name}" not declared; added as expense`, warn: true });
+      errors.push({ line: ln, msg: `Category "${name}" not declared; added as expense`, key: 'undeclared', args: [name], warn: true });
       addCat(name, 'expense');
     }
   };
@@ -116,15 +124,15 @@ export function parse(text) {
     const [kw, ...rest] = r.toks.map(t => t.v);
     try {
       if (kw === 'currency') {
-        if (!/^[A-Za-z]{3}$/.test(rest[0] || '')) throw new Error('Expected 3-letter currency code');
+        if (!/^[A-Za-z]{3}$/.test(rest[0] || '')) fail('currency', [], 'Expected 3-letter currency code');
         b.currency = rest[0].toUpperCase();
       } else if (kw === 'category') {
         if (rest.length < 2 || rest.length > 3 || !['income', 'expense'].includes(rest[1])
           || (rest.length === 3 && rest[2] !== 'certain'))
-          throw new Error('Expected: category NAME income|expense [certain]');
+          fail('category', [], 'Expected: category NAME income|expense [certain]');
         addCat(rest[0], rest[1], rest.length === 3);
       }
-    } catch (e) { errors.push({ line: r.ln, msg: e.message }); }
+    } catch (e) { errors.push(errEntry(r.ln, e)); }
   }
 
   // Pass 2: plans and transactions.
@@ -134,26 +142,26 @@ export function parse(text) {
     try {
       if (kw === 'currency' || kw === 'category') continue;
       if (kw === 'plan') {
-        if (vals.length < 4 || vals.length > 5) throw new Error('Expected: plan YEAR CATEGORY AMOUNT [MONTHS]');
+        if (vals.length < 4 || vals.length > 5) fail('plan', [], 'Expected: plan YEAR CATEGORY AMOUNT [MONTHS]');
         const year = vals[1];
-        if (!/^\d{4}$/.test(year)) throw new Error(`Bad year "${year}"`);
+        if (!/^\d{4}$/.test(year)) fail('year', [year], `Bad year "${year}"`);
         const amount = parseAmount(vals[3]);
         const months = parseMonths(vals[4]);
         useCat(vals[2], r.ln);
         const row = ((b.plans[year] ||= {})[vals[2]] ||= Array(12).fill(0));
         for (const m of months) row[m] = amount;
       } else if (/^\d{4}-\d{2}-\d{2}$/.test(kw)) {
-        if (vals.length < 3) throw new Error('Expected: DATE CATEGORY AMOUNT [note]');
+        if (vals.length < 3) fail('tx', [], 'Expected: DATE CATEGORY AMOUNT [note]');
         const d = new Date(kw + 'T00:00:00Z');
-        if (isNaN(d) || d.toISOString().slice(0, 10) !== kw) throw new Error(`Bad date "${kw}"`);
+        if (isNaN(d) || d.toISOString().slice(0, 10) !== kw) fail('date', [kw], `Bad date "${kw}"`);
         const amount = parseAmount(vals[2]);
         useCat(vals[1], r.ln);
         const note = r.line.slice(r.toks[2].end).trim();
         b.tx.push({ date: kw, cat: vals[1], amount, note });
       } else {
-        throw new Error(`Unrecognized line`);
+        fail('unknown', [], 'Unrecognized line');
       }
-    } catch (e) { errors.push({ line: r.ln, msg: e.message }); }
+    } catch (e) { errors.push(errEntry(r.ln, e)); }
   }
   sortTx(b);
   return { budget: b, errors };

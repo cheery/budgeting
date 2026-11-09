@@ -2,7 +2,7 @@
 
 A small budgeting app that tracks your money month by month and lets you plan income and expenses for the whole year.
 It is an installable web app (PWA), so the same code runs on **Ubuntu** (in the browser, or installed as an app from Chrome/Chromium) and on **Android** (installed to the home screen from Chrome).
-It also works offline.
+It also works offline. The interface is available in **Finnish and English**: choose the language from the menu in the top bar.
 
 All data is one **plain-text file**, `budget.txt`. You can sync it through **Google Drive**.
 
@@ -104,6 +104,7 @@ How the sync works:
 | `app.js` | UI, local storage, sync orchestration |
 | `core.js` | Text format parser/serializer, merge, statistics (no DOM) |
 | `drive.js` | Google sign-in and Drive REST calls |
+| `i18n.js` | All UI text in Finnish and English |
 | `learn.js` | Training-mode lessons (fi/en) and progress checks (no DOM) |
 | `sw.js`, `manifest.webmanifest`, `icon*` | Offline support and installability |
 | `test/core.test.mjs` | Unit tests: `npm test` |

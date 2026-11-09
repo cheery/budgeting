@@ -1,0 +1,196 @@
+// UI translations (English / Finnish). Values are strings or functions taking arguments.
+// Keys must match in both languages; a test enforces it.
+// Strings marked "HTML" are trusted markup; all others are escaped by the caller.
+
+export const LANGS = { fi: 'Suomi', en: 'English' };
+export const LOCALE = { fi: 'fi-FI', en: 'en-GB' };
+
+export const STR = {
+  en: {
+    'app.title': 'Budget',
+    'lang.label': 'Language',
+    'tab.month': 'Month', 'tab.year': 'Year plan', 'tab.cats': 'Categories',
+    'tab.text': 'Text', 'tab.sync': 'Sync', 'tab.learn': 'Learn',
+    'months': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    'starter': ['Salary', 'Other income', 'Rent', 'Groceries', 'Utilities', 'Transport', 'Entertainment', 'Savings', 'Other'],
+
+    'type.expense': 'Expense', 'type.expenseCertain': 'Certain expense',
+    'type.income': 'Income', 'type.incomeCertain': 'Certain income',
+
+    'btn.add': 'Add', 'btn.save': 'Save', 'btn.cancel': 'Cancel', 'btn.edit': 'Edit', 'btn.delete': 'Delete',
+    'btn.revert': 'Revert', 'btn.apply': 'Apply',
+
+    'month.prev': 'Previous month', 'month.next': 'Next month', 'month.backToCurrent': 'Back to this month',
+    'card.income': 'Income', 'card.expenses': 'Expenses', 'card.net': 'Net',
+    'card.ofPlanned': n => `of ${n} planned`, 'card.planned': n => `planned ${n}`,
+    'tx.add': 'Add transaction', 'tx.edit': 'Edit transaction',
+    'f.date': 'Date', 'f.category': 'Category', 'f.amount': 'Amount', 'f.note': 'Note', 'f.optional': 'optional', 'f.amountPh': '0.00',
+    'month.noPlan': 'No plan for this month yet.', 'month.planYear': 'Plan your year →',
+    'h.expenses': 'Expenses', 'h.income': 'Income', 'h.transactions': 'Transactions',
+    'month.noTx': 'No transactions this month.',
+    'cat.nothing': 'Nothing planned or spent.',
+    'cat.left': n => `${n} left`, 'cat.over': n => `${n} over`, 'cat.toGo': n => `${n} to go`, 'cat.received': 'received',
+    'cat.fromPlan': 'counted from plan',
+    'tag.certain': 'certain', 'tag.auto': 'auto',
+    'tag.title': 'Certain: the planned amount counts even without a transaction',
+
+    'year.prev': 'Previous year', 'year.next': 'Next year', 'year.title': y => `Plan ${y}`,
+    'year.copyPlan': y => `Copy plan from ${y}`, 'year.editCats': 'Edit categories',
+    'year.plannedIncome': 'Planned income', 'year.plannedExpenses': 'Planned expenses', 'year.plannedNet': 'Planned net',
+    'legend.incPlan': 'Income plan', 'legend.actual': 'actual', 'legend.expPlan': 'Expense plan',
+    'year.hint': 'Enter the planned amount per month. ⇉ copies the first filled month to all months.',
+    'year.fillTitle': 'Copy first value to all months',
+    'year.category': 'Category', 'year.year': 'Year',
+    'year.totalIncome': 'Total income', 'year.totalExpense': 'Total expenses',
+    'year.actualNet': 'Actual net', 'year.cumPlan': 'Cumulative plan', 'year.cumActual': 'Cumulative actual',
+
+    'cats.title': 'Categories', 'cats.new': 'New category',
+    'cats.usesTitle': 'Lines in the file that mention this category',
+    'cats.inUse': n => `In use: remove its ${n} plan/transaction line(s) first`,
+    'cats.usesHelp': '<b>N x</b> = number of plan and transaction lines that mention the category. A category can only be deleted when it is not used anywhere.', // HTML
+    'cats.certainHelp': '<b>Certain</b> income/expense: the planned amount counts as actual in any month without transactions in that category (e.g. salary, rent). Entering a transaction replaces the automatic amount.', // HTML
+    'cats.settings': 'Settings', 'cats.currency': 'Currency',
+
+    'text.title': 'Plain text',
+    'text.help': 'This is exactly what’s stored and synced. Edit it directly and press Apply.',
+    'text.line': (n, msg) => `Line ${n}: ${msg}`,
+
+    'sync.title': 'Sync & file',
+    'sync.driveHelp': 'Keeps <code>budget.txt</code> in your Google Drive and merges changes from your other devices. Needs an OAuth Client ID. See README.md for setup.', // HTML
+    'sync.now': 'Sync now', 'sync.disconnect': 'Disconnect', 'sync.status': 'Status',
+    'sync.last': s => `Last synced ${s}`,
+    'sync.localFile': 'Local file', 'sync.download': 'Download budget.txt', 'sync.import': 'Import file…',
+    'sync.importHelp': 'Import merges the file into your current data. Use the Text tab to replace everything.',
+    'sync.created': 'created budget.txt in Drive', 'sync.merged': 'merged changes from another device',
+    'status.notSetUp': 'not set up', 'status.busy': 'syncing…', 'status.error': 'error',
+    'status.notConnected': 'not connected', 'status.synced': 'synced', 'status.local': 'local changes',
+    'syncBtn.notSetUp': '☁ Set up sync', 'syncBtn.busy': '⟳ …', 'syncBtn.error': '⚠ Sync',
+    'syncBtn.notConnected': '☁ Sync', 'syncBtn.synced': '✓ Synced', 'syncBtn.local': '⟳ Sync',
+
+    'ask.delTx': (cat, amt, date) => `Delete ${cat} ${amt} on ${date}?`,
+    'ask.copyPlan': (y, p) => `Overwrite the ${y} plan with ${p}’s?`,
+    'ask.delCat': name => `Delete category "${name}"?`,
+    'ask.rawProblems': n => `${n} line(s) have problems and will be dropped. Apply anyway?`,
+    'ask.unlink': 'Stop syncing with Google Drive on this device? Your data stays here and in Drive.',
+    'msg.catInUse': (name, n) => `"${name}" is used on ${n} line(s) in the plan or transactions. Remove or recategorize those first.`,
+    'msg.badAmount': 'Please enter a valid amount',
+    'msg.catExists': 'Category exists or name is empty',
+    'msg.imported': 'Imported and merged.',
+
+    'err.quote': 'Unterminated quote',
+    'err.amount': s => `Bad amount "${s}"`,
+    'err.months': s => `Bad month list "${s}"`,
+    'err.currency': 'Expected 3-letter currency code',
+    'err.category': 'Expected: category NAME income|expense [certain]',
+    'err.plan': 'Expected: plan YEAR CATEGORY AMOUNT [MONTHS]',
+    'err.year': y => `Bad year "${y}"`,
+    'err.date': d => `Bad date "${d}"`,
+    'err.tx': 'Expected: DATE CATEGORY AMOUNT [note]',
+    'err.unknown': 'Unrecognized line',
+    'err.undeclared': n => `Category "${n}" not declared; added as expense`,
+    'err.gisLoad': 'Could not load Google sign-in (offline?)',
+    'err.expired': 'Google session expired; tap Sync to sign in again',
+    'err.drive': s => `Drive error ${s}`,
+  },
+
+  fi: {
+    'app.title': 'Budjetti',
+    'lang.label': 'Kieli',
+    'tab.month': 'Kuukausi', 'tab.year': 'Vuosisuunnitelma', 'tab.cats': 'Luokat',
+    'tab.text': 'Teksti', 'tab.sync': 'Synkronointi', 'tab.learn': 'Opi',
+    'months': ['tammi', 'helmi', 'maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo', 'syys', 'loka', 'marras', 'joulu'],
+    'starter': ['Palkka', 'Muut tulot', 'Vuokra', 'Ruoka', 'Sähkö ja vesi', 'Liikkuminen', 'Vapaa-aika', 'Säästöt', 'Muut menot'],
+
+    'type.expense': 'Meno', 'type.expenseCertain': 'Varma meno',
+    'type.income': 'Tulo', 'type.incomeCertain': 'Varma tulo',
+
+    'btn.add': 'Lisää', 'btn.save': 'Tallenna', 'btn.cancel': 'Peruuta', 'btn.edit': 'Muokkaa', 'btn.delete': 'Poista',
+    'btn.revert': 'Palauta', 'btn.apply': 'Ota käyttöön',
+
+    'month.prev': 'Edellinen kuukausi', 'month.next': 'Seuraava kuukausi', 'month.backToCurrent': 'Takaisin tähän kuukauteen',
+    'card.income': 'Tulot', 'card.expenses': 'Menot', 'card.net': 'Erotus',
+    'card.ofPlanned': n => `suunniteltu ${n}`, 'card.planned': n => `suunniteltu ${n}`,
+    'tx.add': 'Lisää tapahtuma', 'tx.edit': 'Muokkaa tapahtumaa',
+    'f.date': 'Päivä', 'f.category': 'Luokka', 'f.amount': 'Summa', 'f.note': 'Muistiinpano', 'f.optional': 'valinnainen', 'f.amountPh': '0,00',
+    'month.noPlan': 'Tälle kuukaudelle ei ole vielä suunnitelmaa.', 'month.planYear': 'Suunnittele vuosi →',
+    'h.expenses': 'Menot', 'h.income': 'Tulot', 'h.transactions': 'Tapahtumat',
+    'month.noTx': 'Ei tapahtumia tässä kuussa.',
+    'cat.nothing': 'Ei suunniteltua eikä toteutunutta.',
+    'cat.left': n => `${n} jäljellä`, 'cat.over': n => `${n} yli`, 'cat.toGo': n => `${n} puuttuu`, 'cat.received': 'saatu',
+    'cat.fromPlan': 'laskettu suunnitelmasta',
+    'tag.certain': 'varma', 'tag.auto': 'auto',
+    'tag.title': 'Varma: suunniteltu summa lasketaan mukaan ilman tapahtumaakin',
+
+    'year.prev': 'Edellinen vuosi', 'year.next': 'Seuraava vuosi', 'year.title': y => `Suunnitelma ${y}`,
+    'year.copyPlan': y => `Kopioi suunnitelma vuodelta ${y}`, 'year.editCats': 'Muokkaa luokkia',
+    'year.plannedIncome': 'Suunnitellut tulot', 'year.plannedExpenses': 'Suunnitellut menot', 'year.plannedNet': 'Suunniteltu erotus',
+    'legend.incPlan': 'Tulot, suunnitelma', 'legend.actual': 'toteuma', 'legend.expPlan': 'Menot, suunnitelma',
+    'year.hint': 'Kirjoita suunniteltu summa kuukausittain. ⇉ kopioi ensimmäisen täytetyn kuukauden summan kaikille kuukausille.',
+    'year.fillTitle': 'Kopioi ensimmäinen summa kaikille kuukausille',
+    'year.category': 'Luokka', 'year.year': 'Vuosi',
+    'year.totalIncome': 'Tulot yhteensä', 'year.totalExpense': 'Menot yhteensä',
+    'year.actualNet': 'Toteutunut erotus', 'year.cumPlan': 'Kertymä, suunniteltu', 'year.cumActual': 'Kertymä, toteutunut',
+
+    'cats.title': 'Luokat', 'cats.new': 'Uusi luokka',
+    'cats.usesTitle': 'Tiedoston rivit, joilla luokka mainitaan',
+    'cats.inUse': n => `Käytössä: poista ensin sen ${n} suunnitelma- tai tapahtumariviä`,
+    'cats.usesHelp': '<b>N x</b> = suunnitelma- ja tapahtumarivien määrä, joilla luokka mainitaan. Luokan voi poistaa vain, kun sitä ei käytetä missään.', // HTML
+    'cats.certainHelp': '<b>Varma</b> tulo tai meno: suunniteltu summa lasketaan toteutuneeksi jokaisena kuukautena, jolla luokassa ei ole tapahtumia (esim. palkka, vuokra). Kun kirjaat tapahtuman, se korvaa automaattisen summan.', // HTML
+    'cats.settings': 'Asetukset', 'cats.currency': 'Valuutta',
+
+    'text.title': 'Teksti',
+    'text.help': 'Tämä on täsmälleen se, mikä tallennetaan ja synkronoidaan. Voit muokata sitä suoraan ja painaa Ota käyttöön. Tiedoston avainsanat (category, plan, income…) ovat englanniksi, jotta sama tiedosto toimii kaikilla kielillä.',
+    'text.line': (n, msg) => `Rivi ${n}: ${msg}`,
+
+    'sync.title': 'Synkronointi ja tiedosto',
+    'sync.driveHelp': 'Pitää <code>budget.txt</code>-tiedoston Google Drivessasi ja yhdistää muutokset muilta laitteiltasi. Tarvitsee OAuth Client ID:n. Ohjeet ovat README.md-tiedostossa.', // HTML
+    'sync.now': 'Synkronoi nyt', 'sync.disconnect': 'Katkaise yhteys', 'sync.status': 'Tila',
+    'sync.last': s => `Viimeksi synkronoitu ${s}`,
+    'sync.localFile': 'Paikallinen tiedosto', 'sync.download': 'Lataa budget.txt', 'sync.import': 'Tuo tiedosto…',
+    'sync.importHelp': 'Tuonti yhdistää tiedoston nykyisiin tietoihisi. Jos haluat korvata kaiken, käytä Teksti-välilehteä.',
+    'sync.created': 'budget.txt luotu Driveen', 'sync.merged': 'muutokset yhdistetty toiselta laitteelta',
+    'status.notSetUp': 'ei käytössä', 'status.busy': 'synkronoidaan…', 'status.error': 'virhe',
+    'status.notConnected': 'ei yhdistetty', 'status.synced': 'synkronoitu', 'status.local': 'paikallisia muutoksia',
+    'syncBtn.notSetUp': '☁ Synkronointi', 'syncBtn.busy': '⟳ …', 'syncBtn.error': '⚠ Synkronoi',
+    'syncBtn.notConnected': '☁ Synkronoi', 'syncBtn.synced': '✓ Synkronoitu', 'syncBtn.local': '⟳ Synkronoi',
+
+    'ask.delTx': (cat, amt, date) => `Poistetaanko ${cat} ${amt} (${date})?`,
+    'ask.copyPlan': (y, p) => `Korvataanko vuoden ${y} suunnitelma vuoden ${p} suunnitelmalla?`,
+    'ask.delCat': name => `Poistetaanko luokka "${name}"?`,
+    'ask.rawProblems': n => `${n} rivillä on ongelmia, ja ne jätetään pois. Otetaanko silti käyttöön?`,
+    'ask.unlink': 'Lopetetaanko synkronointi Google Driven kanssa tällä laitteella? Tietosi säilyvät täällä ja Drivessa.',
+    'msg.catInUse': (name, n) => `Luokkaa "${name}" käytetään ${n} rivillä suunnitelmassa tai tapahtumissa. Poista ne tai vaihda niiden luokka ensin.`,
+    'msg.badAmount': 'Anna kelvollinen summa',
+    'msg.catExists': 'Luokka on jo olemassa tai nimi puuttuu',
+    'msg.imported': 'Tuotu ja yhdistetty.',
+
+    'err.quote': 'Lainausmerkki jäi sulkematta',
+    'err.amount': s => `Virheellinen summa "${s}"`,
+    'err.months': s => `Virheellinen kuukausimäärittely "${s}"`,
+    'err.currency': 'Odotettiin kolmikirjaimista valuuttakoodia',
+    'err.category': 'Odotettiin: category NIMI income|expense [certain]',
+    'err.plan': 'Odotettiin: plan VUOSI LUOKKA SUMMA [KUUKAUDET]',
+    'err.year': y => `Virheellinen vuosi "${y}"`,
+    'err.date': d => `Virheellinen päivämäärä "${d}"`,
+    'err.tx': 'Odotettiin: PÄIVÄ LUOKKA SUMMA [muistiinpano]',
+    'err.unknown': 'Tuntematon rivi',
+    'err.undeclared': n => `Luokkaa "${n}" ei ole määritelty; lisätty menoksi`,
+    'err.gisLoad': 'Googlen kirjautumista ei voitu ladata (ei verkkoyhteyttä?)',
+    'err.expired': 'Google-istunto vanheni; kirjaudu uudelleen napauttamalla Synkronoi',
+    'err.drive': s => `Drive-virhe ${s}`,
+  },
+};
+
+export function translator(lang) {
+  const table = STR[lang] || STR.en;
+  return (key, ...args) => {
+    const v = table[key] ?? STR.en[key];
+    if (v === undefined) return key;
+    return typeof v === 'function' ? v(...args) : v;
+  };
+}
+
+// Translate an error that carries `key`/`args` (from core.js or drive.js), else use its message.
+export function errorText(t, e) {
+  return e.key ? t('err.' + e.key, ...(e.args || [])) : (e.msg ?? e.message);
+}

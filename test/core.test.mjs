@@ -151,3 +151,28 @@ test('training lessons: content complete in both languages, checks detect progre
   assert.equal(learn.detect(L('track'), b, now), true);         // 3 transactions in March
   assert.equal(learn.detect(L('ahead'), b, now), true);
 });
+
+test('i18n: both languages complete; lesson labels and error keys resolve', async () => {
+  const { STR, translator, errorText } = await import('../i18n.js');
+  const learn = await import('../learn.js');
+  const fi = Object.keys(STR.fi).sort(), en = Object.keys(STR.en).sort();
+  assert.deepEqual(fi, en);
+  for (const k of en) assert.equal(typeof STR.fi[k], typeof STR.en[k], k);
+  assert.equal(STR.fi.months.length, 12);
+  assert.equal(STR.fi.starter.length, STR.en.starter.length);
+  // every {key} used in lessons exists
+  for (const l of learn.LESSONS) for (const lang of ['fi', 'en'])
+    for (const [, k] of (l[lang].body + (l[lang].tip || '')).matchAll(/\{([\w.]+)\}/g))
+      assert.ok(k in STR[lang], `${l.id}/${lang}: {${k}}`);
+  // every parse error carries a key that has a translation
+  const bad = ['x "unterminated', 'currency EURO', 'category X', 'plan 26 X 1', 'plan 2026 X 1 13',
+    '2026-02-30 X 1', '2026-01-01 X abc', '2026-01-01', 'hello', '2026-01-01 Undeclared 5'];
+  const { errors } = core.parse(bad.join('\n'));
+  assert.equal(errors.length, bad.length);
+  const t = translator('fi');
+  for (const e of errors) {
+    assert.ok(e.key && `err.${e.key}` in STR.fi, `${e.line}: ${e.msg}`);
+    assert.notEqual(errorText(t, e), e.msg);
+  }
+  assert.equal(errorText(t, { message: 'raw' }), 'raw');
+});

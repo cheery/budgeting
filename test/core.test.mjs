@@ -166,7 +166,7 @@ test('i18n: both languages complete; lesson labels and error keys resolve', asyn
       assert.ok(k in STR[lang], `${l.id}/${lang}: {${k}}`);
   // every parse error carries a key that has a translation
   const bad = ['x "unterminated', 'currency EURO', 'category X', 'plan 26 X 1', 'plan 2026 X 1 13',
-    '2026-02-30 X 1', '2026-01-01 X abc', '2026-01-01', 'hello', '2026-01-01 Undeclared 5'];
+    '2026-02-30 X 1', '2026-01-01 X abc', '2026-01-01', 'hello', '2026-01-01 Undeclared 5', 'balance 2026-02-01'];
   const { errors } = core.parse(bad.join('\n'));
   assert.equal(errors.length, bad.length);
   const t = translator('fi');
@@ -175,4 +175,51 @@ test('i18n: both languages complete; lesson labels and error keys resolve', asyn
     assert.notEqual(errorText(t, e), e.msg);
   }
   assert.equal(errorText(t, { message: 'raw' }), 'raw');
+});
+
+test('balance entries: parse, serialize, merge', () => {
+  const src = SAMPLE + 'balance 2026-05-01 800\nbalance 2026-01-01 -120,5\n';
+  const { budget: b, errors } = core.parse(src);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(b.balances, { '2026-05-01': 800, '2026-01-01': -120.5 });
+  const out = core.serialize(b);
+  assert.match(out, /balance 2026-01-01 -120.50\nbalance 2026-05-01 800\n/);
+  assert.deepEqual(core.parse(out).budget, b);
+  assert.equal(core.parse('balance 2026-02-30 5').errors[0].key, 'date');
+  assert.equal(core.parse('balance 2026-02-01').errors[0].key, 'balance');
+  const merged = core.parse(core.merge(SAMPLE, SAMPLE + 'balance 2026-03-01 100\n', SAMPLE + 'balance 2026-06-01 50\n')).budget;
+  assert.deepEqual(merged.balances, { '2026-03-01': 100, '2026-06-01': 50 });
+});
+
+test('running balance', () => {
+  const base = `category Pay income
+category Food expense
+plan 2026 Pay 1000 all
+plan 2026 Food 600 all
+plan 2027 Pay 1000 all
+plan 2027 Food 900 all
+`;
+  // No balance entry: same as cumulative net from 0 on Jan 1.
+  let r = core.runningBalance(core.parse(base).budget, '2026');
+  assert.deepEqual(r.plan.slice(0, 3), [400, 800, 1200]);
+  assert.equal(r.anchored[0], false);
+
+  // Balance at the start of May: months before it still count from 0, May onwards from 800.
+  r = core.runningBalance(core.parse(base + 'balance 2026-05-01 800\n').budget, '2026');
+  assert.equal(r.plan[3], 1600);
+  assert.equal(r.plan[4], 1200);          // 800 + 1000 - 600
+  assert.equal(r.plan[11], 1200 + 7 * 400);
+  assert.equal(r.anchored[4], true);
+
+  // Mid-month balance already includes earlier transactions of that month.
+  const mid = base + '2026-05-02 Food 100\n2026-05-20 Food 50\nbalance 2026-05-10 500\n';
+  r = core.runningBalance(core.parse(mid).budget, '2026');
+  assert.equal(r.actual[4], 500 + 100 - 150);   // = 450: only the 50 spent after the 10th
+  assert.equal(r.plan[4], 500 + 100 + 400);      // plan for May assumes the rest goes to plan
+
+  // Carries over into the next year.
+  r = core.runningBalance(core.parse(base + 'balance 2026-12-01 300\n').budget, '2027');
+  assert.equal(r.plan[0], 300 + 400 + 100);
+  assert.equal(r.anchored[0], true);
+  assert.deepEqual(core.balanceInMonth(core.parse(mid).budget, '2026', 4), { date: '2026-05-10', amount: 500 });
 });

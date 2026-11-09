@@ -25,6 +25,7 @@ Do this on a test device or browser profile, because it replaces your data there
 ## Features
 
 - **Month**: add, edit and delete transactions. See actual vs. planned spending per category, with progress bars and over-budget warnings.
+- **Undo**: every change shows a short "Change saved · Undo" notice. You can undo several steps, also with Ctrl+Z.
 - **Year plan**: a grid of categories × 12 months. Use ⇉ to fill a row, or copy last year's plan. It shows planned and actual net per month, cumulative totals, and a chart.
 - **Categories**: add, rename (updates all transactions and plans), delete (only when unused: the `N x` count shows how many plan and transaction lines mention it), and set the type: income, expense, *certain income* or *certain expense*. Certain categories count their planned amount without needing a transaction. You can also set the currency here.
 - **Text**: view and edit the raw file directly. Parse errors are shown with line numbers.
@@ -41,6 +42,8 @@ category "Car insurance" expense
 category Groceries expense
 category Rent expense certain      # counts automatically, see below
 
+balance 2026-05-01 800             # account balance at the start of that day
+
 plan 2026 Salary 3500 all          # every month
 plan 2026 Salary 4000 7            # July differs
 plan 2026 "Car insurance" 640 3,9  # March and September
@@ -51,6 +54,7 @@ plan 2026 Groceries 450 1-12
 ```
 
 - `certain` marks income or expenses that will definitely happen, such as salary or rent. In a month with no transactions for that category, its planned amount counts as actual. Once you enter a transaction, the real amount is used instead.
+- `balance` records your account balance at the start of a day. The year plan's cumulative rows then show how much money you will have at the end of each month, continuing from the latest balance (even into the next year). If you enter a balance mid-month, that month's earlier transactions are already included in it, so they aren't counted twice. You can also enter balances in the *Balance at start of month* row of the year plan.
 - Lines starting with `#` are comments.
 - Names containing spaces must be in quotes.
 - Decimal comma (`54,20`) is accepted.

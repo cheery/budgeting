@@ -10,6 +10,7 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
 - Run: `npm start` (serves on :8000). Test: `npm test` (Node's built-in runner).
 - `core.js` must stay DOM-free so it can be tested in Node. Put logic there and keep UI in `app.js`.
 - There is no Flutter or Android SDK on the dev machine. That's why this is a PWA.
+- **Workflow:** the owner pushes. Agents commit only when asked, and never push.
 
 ## Things learned the hard way
 
@@ -32,6 +33,14 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
   manifest/icons). Otherwise installed apps keep the old code. Pre-caching uses `cache: 'reload'`
   because GitHub Pages sends `max-age=600`.
 - Float sums: round money totals to cents (`Math.round(x * 100) / 100`).
+- **Undo must not cross a sync merge.** The undo stack holds whole previous texts. `setText()` from
+  Drive clears it, because restoring a pre-merge text would make the next sync delete the other
+  device's changes. UI edits, Text-tab Apply and import are undoable.
+- **Balances anchor the cumulative rows.** `runningBalance()` starts from the latest `balance`
+  entry on or before each month (possibly in an earlier year), else from 0 on Jan 1. A mid-month
+  balance already contains that month's earlier transactions (`txNetBefore`).
+- **Never remove user data as a side effect.** For example, a category can't be deleted while any
+  plan or transaction line uses it (`categoryUses`). Keep new destructive actions just as explicit.
 
 ## Languages (`i18n.js`)
 
@@ -69,8 +78,17 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
   (expand `~`). Install Playwright in a scratch directory, not in this repo.
 - Check both desktop (~1100px) and phone (390px) widths. Phone layouts break first
   (the category list and the year grid).
+- Seed data with `context.addInitScript` (set `budget.text` in localStorage). Set
+  `budget.learn` to `{"dismissed":true}` to hide the training banner.
+- To test Finnish, create the context with `locale: 'fi-FI'`. To catch untranslated text, scan
+  `innerText` plus `title`/`placeholder`/`aria-label` for English UI words, after removing user
+  data (category names, notes, the textarea). Finnish labels are longer, so check phone widths in
+  Finnish too.
+- The README screenshots are English and predate the language selector. Regenerate them (with the
+  banner) after visible UI changes.
 
-## Not yet verified
+## Sync status
 
-- Google Drive sync has never run against the real API (it needs the user's OAuth client ID).
-  Treat `drive.js` as untested.
+- Google Drive sync has been tested by the owner against the real API (Nov 2026) and works.
+  Re-test it by hand after changing `drive.js` or the merge, because there are no automated tests
+  against Drive.

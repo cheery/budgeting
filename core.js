@@ -7,7 +7,8 @@ export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 export function emptyBudget() {
   // plans: { [year]: { [category]: number[12] } }
   // tx:    [{ date: 'YYYY-MM-DD', cat, amount, note }]
-  return { currency: 'EUR', categories: [], plans: {}, tx: [] };
+  // balances: { 'YYYY-MM-DD': amount } = account balance at the start of that day
+  return { currency: 'EUR', categories: [], plans: {}, tx: [], balances: {} };
 }
 
 // Errors carry a `key` and `args` so the UI can translate them (see i18n.js `err.*`).
@@ -141,7 +142,11 @@ export function parse(text) {
     const kw = vals[0];
     try {
       if (kw === 'currency' || kw === 'category') continue;
-      if (kw === 'plan') {
+      if (kw === 'balance') {
+        if (vals.length !== 3) fail('balance', [], 'Expected: balance YYYY-MM-DD AMOUNT');
+        checkDate(vals[1]);
+        b.balances[vals[1]] = parseAmount(vals[2]);
+      } else if (kw === 'plan') {
         if (vals.length < 4 || vals.length > 5) fail('plan', [], 'Expected: plan YEAR CATEGORY AMOUNT [MONTHS]');
         const year = vals[1];
         if (!/^\d{4}$/.test(year)) fail('year', [year], `Bad year "${year}"`);
@@ -152,8 +157,7 @@ export function parse(text) {
         for (const m of months) row[m] = amount;
       } else if (/^\d{4}-\d{2}-\d{2}$/.test(kw)) {
         if (vals.length < 3) fail('tx', [], 'Expected: DATE CATEGORY AMOUNT [note]');
-        const d = new Date(kw + 'T00:00:00Z');
-        if (isNaN(d) || d.toISOString().slice(0, 10) !== kw) fail('date', [kw], `Bad date "${kw}"`);
+        checkDate(kw);
         const amount = parseAmount(vals[2]);
         useCat(vals[1], r.ln);
         const note = r.line.slice(r.toks[2].end).trim();
@@ -165,6 +169,11 @@ export function parse(text) {
   }
   sortTx(b);
   return { budget: b, errors };
+}
+
+function checkDate(s) {
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(s + 'T00:00:00Z');
+  if (!d || isNaN(d) || d.toISOString().slice(0, 10) !== s) fail('date', [s], `Bad date "${s}"`);
 }
 
 export function sortTx(b) {
@@ -179,6 +188,7 @@ export function serialize(b) {
     '#   currency CODE',
     '#   category NAME income|expense [certain]   certain = planned amount counts',
     '#                                             as actual in months with no transactions',
+    '#   balance YYYY-MM-DD AMOUNT            account balance at the start of that day',
     '#   plan YEAR CATEGORY AMOUNT MONTHS     MONTHS: all | 3 | 1-6 | 1,4,7,10',
     '#   YYYY-MM-DD CATEGORY AMOUNT [note]    (negative amount = refund)',
     '#   Quote names that contain spaces: "Car insurance"',
@@ -189,6 +199,9 @@ export function serialize(b) {
   for (const t of ['income', 'expense'])
     for (const c of b.categories.filter(c => c.type === t))
       out.push(`category ${quote(c.name)} ${c.type}${c.certain ? ' certain' : ''}`);
+
+  const bal = Object.keys(b.balances || {}).sort();
+  if (bal.length) out.push('', ...bal.map(d => `balance ${d} ${fmtNum(b.balances[d])}`));
 
   for (const year of Object.keys(b.plans).sort()) {
     const lines = [];
@@ -325,4 +338,58 @@ export function yearStats(b, year) {
       income: s.income, expense: s.expense,
     };
   });
+}
+
+// ---------- account balance ----------
+
+// Signed net (income - expense) of real transactions in date's month that happened before it.
+function txNetBefore(b, date) {
+  const types = new Map(b.categories.map(c => [c.name, c.type]));
+  let n = 0;
+  for (const t of b.tx)
+    if (t.date.slice(0, 7) === date.slice(0, 7) && t.date < date)
+      n += types.get(t.cat) === 'income' ? t.amount : -t.amount;
+  return n;
+}
+
+// Running account balance at the end of each month of `year`, planned and actual.
+// Starts from the latest `balance` entry on or before each month (possibly in an earlier
+// year), or from 0 on Jan 1 of `year` if there is none. A mid-month balance already
+// includes that month's earlier transactions, so they are not counted twice.
+export function runningBalance(b, year) {
+  const y = +year;
+  const entries = Object.entries(b.balances || {}).sort(([a], [c]) => (a < c ? -1 : 1));
+  const nets = new Map();
+  const net = (yy, m) => {
+    const k = yy * 12 + m;
+    if (!nets.has(k)) {
+      const s = monthStats(b, String(yy), m);
+      nets.set(k, { plan: s.income.planned - s.expense.planned, actual: s.income.actual - s.expense.actual });
+    }
+    return nets.get(k);
+  };
+  const plan = [], actual = [], anchored = [];
+  for (let m = 0; m < 12; m++) {
+    const monthEnd = `${ym(y, m)}-31`;
+    const found = entries.filter(([d]) => d <= monthEnd).pop();
+    const [date, amount] = found || [`${y}-01-01`, 0];
+    const ay = +date.slice(0, 4), am = +date.slice(5, 7) - 1;
+    const before = found ? txNetBefore(b, date) : 0;
+    let p = amount - before, a = amount - before;
+    for (let k = ay * 12 + am; k <= y * 12 + m; k++) {
+      const n = net(Math.floor(k / 12), k % 12);
+      p += n.plan; a += n.actual;
+    }
+    plan.push(Math.round(p * 100) / 100);
+    actual.push(Math.round(a * 100) / 100);
+    anchored.push(!!found);
+  }
+  return { plan, actual, anchored };
+}
+
+// The balance entry (date, amount) falling in a given month, if any (the last one).
+export function balanceInMonth(b, year, m) {
+  const prefix = ym(year, m);
+  const d = Object.keys(b.balances || {}).filter(k => k.startsWith(prefix)).sort().pop();
+  return d ? { date: d, amount: b.balances[d] } : null;
 }

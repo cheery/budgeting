@@ -69,17 +69,59 @@ function saveText(s) {
   ls.set(K.text, s);
 }
 
+// ---------- undo ----------
+// Stack of previous texts for changes made on this device. Cleared when a sync brings in
+// remote changes, because undoing past a merge would delete the other device's edits.
+const undoStack = [];
+function remember(prev) {
+  if (prev === text) return;
+  undoStack.push(prev);
+  if (undoStack.length > 50) undoStack.shift();
+  toast('undo.saved');
+}
+function undo() {
+  if (!undoStack.length) return;
+  saveText(undoStack.pop());
+  ({ budget, errors } = core.parse(text));
+  view.editTx = null; view.draft = null;
+  render();
+  scheduleSync();
+  toast('undo.undone');
+}
+
+let toastTimer = null;
+function toast(key) {
+  const el = document.getElementById('toast');
+  el.querySelector('span').textContent = t(key);
+  const btn = el.querySelector('button');
+  btn.textContent = t('undo.btn');
+  btn.hidden = !undoStack.length;
+  el.hidden = false;
+  document.body.classList.add('has-toast');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 7000);
+}
+function hideToast() {
+  document.getElementById('toast').hidden = true;
+  document.body.classList.remove('has-toast');
+}
+
 // Model changed through the UI: re-serialize, store, re-render, sync.
 function commit({ deferRender = false } = {}) {
+  const prev = text;
   saveText(core.serialize(budget));
+  remember(prev);
   errors = [];
   deferRender ? setTimeout(render, 0) : render();
   scheduleSync();
 }
 
-// Text changed from outside (raw editor, import, Drive).
-function setText(s) {
+// Text changed from outside: raw editor or import (undoable), or Drive (not undoable).
+function setText(s, { undoable = false } = {}) {
+  const prev = text;
   saveText(s);
+  if (undoable) remember(prev);
+  else { undoStack.length = 0; hideToast(); }
   ({ budget, errors } = core.parse(s));
   render();
 }
@@ -173,6 +215,11 @@ function renderMonth() {
   const net = s.income.actual - s.expense.actual;
   const plannedNet = s.income.planned - s.expense.planned;
   const isCurrent = year === today.getFullYear() && month === today.getMonth();
+  const isFuture = year > today.getFullYear() || (year === today.getFullYear() && month > today.getMonth());
+  const rb = core.runningBalance(budget, year);
+  const endBalance = !rb.anchored[month] ? ''
+    : `<p class="small muted center">${esc(isFuture ? t('card.endBalancePlan', money(rb.plan[month]))
+      : t('card.endBalance', money(rb.actual[month]), money(rb.plan[month])))}</p>`;
 
   const e = view.editTx;
   const d = view.draft || {};
@@ -203,6 +250,7 @@ function renderMonth() {
     <div class="card"><div class="label">${esc(t('card.expenses'))}</div><div class="big">${money(s.expense.actual)}</div><div class="muted small">${esc(t('card.ofPlanned', money(s.expense.planned)))}</div></div>
     <div class="card"><div class="label">${esc(t('card.net'))}</div><div class="big ${net < 0 ? 'neg' : 'pos'}">${money(net)}</div><div class="muted small">${esc(t('card.planned', money(plannedNet)))}</div></div>
   </div>
+  ${endBalance}
 
   <form id="txForm" class="panel">
     <h3>${esc(t(e ? 'tx.edit' : 'tx.add'))}</h3>
@@ -251,11 +299,17 @@ function renderYear() {
   };
 
   const future = m => view.year > today.getFullYear() || (curM !== -1 && m > curM);
-  let cum = 0, cumP = 0;
   const pNet = stats.map(s => s.plannedNet);
   const aNet = stats.map((s, m) => future(m) ? null : s.actualNet);
-  const cumPlan = pNet.map(v => (cumP += v));
-  const cumAct = aNet.map(v => v == null ? null : (cum += v));
+  const rb = core.runningBalance(budget, y);
+  const cumPlan = rb.plan;
+  const cumAct = rb.actual.map((v, m) => future(m) ? null : v);
+  const balRow = `<tr class="balrow"><th class="sticky" title="${esc(t('year.balanceTitle'))}">${esc(t('year.balance'))}</th>${months.map((_, m) => {
+    const e = core.balanceInMonth(budget, y, m);
+    return `<td class="${m === curM ? 'cur' : ''}"><input data-bal data-m="${m}" data-focus="b:${m}" inputmode="decimal"
+      aria-label="${esc(t('year.balance'))} ${esc(months[m])}" title="${e ? esc(fmtDate(e.date)) : esc(t('year.balanceTitle'))}"
+      value="${e ? core.fmtNum(e.amount) : ''}"></td>`;
+  }).join('')}<td></td></tr>`;
   const sumRow = (label, vals, total) => `<tr class="sum"><th class="sticky">${esc(label)}</th>${vals.map(v =>
     `<td class="${v < 0 ? 'neg' : ''}">${v == null ? '' : money0(v)}</td>`).join('')}<td>${total == null ? '' : money0(total)}</td></tr>`;
 
@@ -294,6 +348,7 @@ function renderYear() {
     <tfoot>
       ${sumRow(t('year.plannedNet'), pNet, pNet.reduce((a, b) => a + b, 0))}
       ${sumRow(t('year.actualNet'), aNet, aNet.reduce((a, b) => a + (b || 0), 0))}
+      ${balRow}
       ${sumRow(t('year.cumPlan'), cumPlan, null)}
       ${sumRow(t('year.cumActual'), cumAct, null)}
     </tfoot>
@@ -501,6 +556,11 @@ document.getElementById('backToLesson').addEventListener('click', () => {
   document.getElementById('lesson-' + view.lesson)?.scrollIntoView({ block: 'start' });
 });
 document.getElementById('syncBtn').addEventListener('click', () => syncNow());
+document.querySelector('#toast button').addEventListener('click', undo);
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z'
+      && !e.target.closest('input, textarea, select')) { e.preventDefault(); undo(); }
+});
 const langSel = document.getElementById('langSel');
 langSel.innerHTML = Object.entries(LANGS).map(([k, name]) => `<option value="${k}">${name}</option>`).join('');
 langSel.addEventListener('change', () => { setLang(langSel.value); render(); });
@@ -574,7 +634,7 @@ const actions = {
     if (bad && !confirm(t('ask.rawProblems', bad))) {
       errors = r.errors; text = raw; render(); text = ls.get(K.text); return false;
     }
-    setText(raw);
+    setText(raw, { undoable: true });
     errors = r.errors;
     scheduleSync();
   },
@@ -638,6 +698,17 @@ main.addEventListener('change', e => {
     }
     core.planRow(budget, String(view.year), el.dataset.cat)[+el.dataset.m] = v;
     commit({ deferRender: true });
+  } else if (el.dataset.bal !== undefined) {
+    const y = String(view.year), m = +el.dataset.m;
+    const cur = core.balanceInMonth(budget, y, m);
+    budget.balances ||= {};
+    if (!el.value.trim()) { if (cur) delete budget.balances[cur.date]; }
+    else {
+      let v;
+      try { v = core.parseAmount(el.value); } catch { el.classList.add('bad'); return; }
+      budget.balances[cur?.date ?? `${core.ym(y, m)}-01`] = v;
+    }
+    commit({ deferRender: true });
   } else if (el.dataset.rename !== undefined) {
     const c = budget.categories[+el.dataset.rename];
     const name = el.value.trim();
@@ -654,7 +725,7 @@ main.addEventListener('change', e => {
     render();
   } else if (el.id === 'importFile' && el.files[0]) {
     el.files[0].text().then(s => {
-      setText(core.merge(null, text, s));
+      setText(core.merge(null, text, s), { undoable: true });
       alert(t('msg.imported'));
       scheduleSync();
     });

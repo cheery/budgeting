@@ -211,6 +211,8 @@ export const LESSONS = [
           <li><b>{year.cumPlan}</b> shows how things develop over the year. If it turns red, you will run out
           of money at that point unless something changes.</li>
         </ul>
+        <p>Enter your account balance in the <b>{year.balance}</b> row. The cumulative rows then show how much
+        money you will actually have at the end of each month.</p>
         <p>A red month isn’t a disaster. It’s a warning that arrives in time: you can save beforehand, move an
         expense, or look for extra income.</p>
         <p>If the plan shows problems you can’t solve on your own, get help early, before bills become overdue.
@@ -228,6 +230,8 @@ export const LESSONS = [
           <li><b>{year.cumPlan}</b> näyttää, miten tilanne kehittyy vuoden mittaan. Jos se muuttuu
           punaiseksi, rahat loppuvat siinä kohtaa, ellei jokin muutu.</li>
         </ul>
+        <p>Kirjaa tilisi saldo riville <b>{year.balance}</b>. Silloin kertymärivit näyttävät, paljonko
+        rahaa sinulla oikeasti on kunkin kuukauden lopussa.</p>
         <p>Punainen kuukausi ei ole katastrofi. Se on varoitus, joka tulee ajoissa: voit säästää etukäteen,
         siirtää menoa tai etsiä lisätuloja.</p>
         <p>Jos suunnitelma näyttää ongelmia, joita et saa ratkaistua yksin, hae apua ajoissa, ennen kuin laskut

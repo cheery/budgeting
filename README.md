@@ -79,6 +79,12 @@ Then open <http://localhost:8000>. In Chrome/Chromium you can install it as an a
 2. In the repo, go to *Settings → Pages* and deploy from the `main` branch, root folder.
 3. Open `https://<you>.github.io/<repo>/` in Chrome on Android and choose *⋮ → Add to Home screen / Install app*.
 
+**On AWS** (S3 + CloudFront): the infrastructure is in [`infra/enno-hosting.yaml`](infra/enno-hosting.yaml)
+(CloudFormation stack `enno-hosting`). After pushing to `main`, run `npm run deploy`. It checks that
+`main` matches GitHub, runs the tests, refuses to deploy if shell files changed without a `CACHE` bump
+in `sw.js`, uploads the files and clears the CloudFront cache. Put `AWS_PROFILE=<your profile>` in a
+local `.env.deploy` file (gitignored) and sign in with `aws login` first.
+
 Netlify, Cloudflare Pages or any static host works too. Your data is never sent to the host: it stays on the device and in your Google Drive.
 
 ## Google Drive sync setup (one-time, about 5 minutes)

@@ -11,6 +11,10 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
 - `core.js` must stay DOM-free so it can be tested in Node. Put logic there and keep UI in `app.js`.
 - There is no Flutter or Android SDK on the dev machine. That's why this is a PWA.
 - **Workflow:** the owner pushes. Agents commit only when asked, and never push.
+- **AWS copy:** also hosted on S3 + CloudFront (`infra/enno-hosting.yaml`, Region eu-north-1;
+  "enno" was a working name). It is updated only by the owner running `npm run deploy` after a
+  push. GitHub OIDC is blocked by the AWS project's managed SCP (`iam:*Provider*`), which is why
+  there is no deploy workflow in Actions.
 
 ## Things learned the hard way
 

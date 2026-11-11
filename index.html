@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1f6f5c">
-  <title>Budget</title>
+  <title>ennakkoon.fi</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -12,7 +12,7 @@
 </head>
 <body>
   <header>
-    <h1>Budget</h1>
+    <h1>ennakkoon.fi</h1>
     <div class="hbtns">
       <select id="langSel"></select>
       <button id="syncBtn" type="button">☁ Sync</button>
@@ -27,6 +27,10 @@
     <button data-tab="learn">Learn</button>
   </nav>
   <main id="main"></main>
+  <footer class="site-footer">
+    <span id="madeBy">Made by</span>
+    <a href="https://valueshare.fi/" target="_blank" rel="noopener">ValueShare Oy</a>
+  </footer>
   <button id="backToLesson" type="button" hidden></button>
   <div id="toast" role="status" hidden><span></span><button type="button"></button></div>
   <script type="module" src="app.js"></script>

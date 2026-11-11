@@ -7,7 +7,8 @@ export const LOCALE = { fi: 'fi-FI', en: 'en-GB' };
 
 export const STR = {
   en: {
-    'app.title': 'Budget',
+    'app.title': 'ennakkoon.fi',
+    'footer.madeBy': 'Made by',
     'lang.label': 'Language',
     'tab.month': 'Month', 'tab.year': 'Year plan', 'tab.cats': 'Categories',
     'tab.text': 'Text', 'tab.sync': 'Sync', 'tab.learn': 'Learn',
@@ -100,7 +101,8 @@ export const STR = {
   },
 
   fi: {
-    'app.title': 'Budjetti',
+    'app.title': 'ennakkoon.fi',
+    'footer.madeBy': 'Tekijä:',
     'lang.label': 'Kieli',
     'tab.month': 'Kuukausi', 'tab.year': 'Vuosisuunnitelma', 'tab.cats': 'Luokat',
     'tab.text': 'Teksti', 'tab.sync': 'Synkronointi', 'tab.learn': 'Opi',

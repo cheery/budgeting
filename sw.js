@@ -1,6 +1,6 @@
 // Offline support: serve the app shell from cache, refresh it in the background.
 // Bump on every change to a shell file, or installed apps keep the old version.
-const CACHE = 'budget-v6';
+const CACHE = 'budget-v7';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'core.js', 'drive.js', 'learn.js', 'i18n.js',
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 

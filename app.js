@@ -149,6 +149,7 @@ const main = document.getElementById('main');
 
 function renderChrome() {
   document.title = document.querySelector('header h1').textContent = t('app.title');
+  document.getElementById('madeBy').textContent = t('footer.madeBy');
   document.querySelectorAll('nav.tabs button').forEach(b => {
     b.textContent = t('tab.' + b.dataset.tab);
     b.classList.toggle('on', b.dataset.tab === view.tab);

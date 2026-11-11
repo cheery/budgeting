@@ -1,5 +1,6 @@
 import * as core from './core.js';
 import * as drive from './drive.js';
+import * as cloud from './cloud.js';
 import * as learn from './learn.js';
 import { LANGS, LOCALE, translator, errorText } from './i18n.js';
 
@@ -57,8 +58,9 @@ const todayStr = isoDate(today);
 const view = {
   tab: 'month', year: today.getFullYear(), month: today.getMonth(),
   editTx: null, lastCat: null, draft: null,
+  keepYears: 2, archived: false,   // archive & rotate (Sync tab)
 };
-const sync = { status: 'idle', msg: '' };
+const sync = { status: 'idle', msg: '', admin: null };
 
 function isoDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -150,6 +152,7 @@ const main = document.getElementById('main');
 function renderChrome() {
   document.title = document.querySelector('header h1').textContent = t('app.title');
   document.getElementById('madeBy').textContent = t('footer.madeBy');
+  document.getElementById('privacyLink').textContent = t('footer.privacy');
   document.querySelectorAll('nav.tabs button').forEach(b => {
     b.textContent = t('tab.' + b.dataset.tab);
     b.classList.toggle('on', b.dataset.tab === view.tab);
@@ -454,9 +457,12 @@ function renderSync() {
   const clientId = ls.get(K.clientId) || '';
   const last = ls.get(K.lastSync);
   const msg = sync.msg && (typeof sync.msg === 'string' ? t(sync.msg) : errorText(t, sync.msg));
+  const usingCloud = cloud.signedIn();
   return `<h2>${esc(t('sync.title'))}</h2>
+    ${renderCloud(msg)}
     <section class="panel">
       <h3>Google Drive</h3>
+      ${usingCloud ? `<p class="small muted">${esc(t('sync.driveOff'))}</p></section>` : `
       <p class="small muted">${t('sync.driveHelp')}</p>
       <label>OAuth Client ID<input id="clientId" value="${esc(clientId)}" placeholder="xxxx.apps.googleusercontent.com"></label>
       <div class="actions left">
@@ -465,7 +471,7 @@ function renderSync() {
       </div>
       <p class="small">${esc(t('sync.status'))}: <b>${esc(t('status.' + syncState()))}</b>${msg ? ` - ${esc(msg)}` : ''}</p>
       ${last ? `<p class="small muted">${esc(t('sync.last', new Date(+last).toLocaleString(LOCALE[lang])))}</p>` : ''}
-    </section>
+    </section>`}
     <section class="panel">
       <h3>${esc(t('sync.localFile'))}</h3>
       <div class="actions left">
@@ -473,12 +479,97 @@ function renderSync() {
         <label class="button">${esc(t('sync.import'))}<input type="file" id="importFile" accept=".txt,text/plain" hidden></label>
       </div>
       <p class="small muted">${esc(t('sync.importHelp'))}</p>
+    </section>
+    ${renderArchive()}`;
+}
+
+function renderCloud(msg) {
+  if (!cloud.available()) return '';
+  if (!cloud.signedIn())
+    return `<section class="panel">
+      <h3>${esc(t('cloud.title'))}</h3>
+      <p class="small">${t('cloud.help')}</p>
+      <div class="actions left">${cloud.providers().map(p =>
+        `<button class="primary" data-act="cloudSignIn" data-provider="${esc(p)}">${esc(t('cloud.signInWith', p))}</button>`).join('')}</div>
+      ${sync.status === 'error' && msg ? `<p class="small err">${esc(msg)}</p>` : ''}
+    </section>`;
+  const bytes = new TextEncoder().encode(text).length;
+  const pct = Math.min(100, (bytes / core.MAX_STORED_BYTES) * 100);
+  const last = ls.get(K.lastSync);
+  return `<section class="panel">
+      <h3>${esc(t('cloud.title'))}</h3>
+      <p class="small">${esc(t('cloud.signedInAs', cloud.user()))}</p>
+      <div class="actions left">
+        <button class="primary" data-act="sync">${esc(t('sync.now'))}</button>
+        <button data-act="cloudSignOut">${esc(t('cloud.signOut'))}</button>
+      </div>
+      <p class="small">${esc(t('sync.status'))}: <b>${esc(t('status.' + syncState()))}</b>${msg ? ` - ${esc(msg)}` : ''}</p>
+      ${last ? `<p class="small muted">${esc(t('sync.last', new Date(+last).toLocaleString(LOCALE[lang])))}</p>` : ''}
+      <p class="small muted">${esc(t('cloud.usage', Math.ceil(bytes / 1024), core.MAX_STORED_BYTES / 1024))}</p>
+      <div class="bar"><div class="${pct >= 90 ? 'over' : 'income'}" style="width:${pct}%"></div></div>
+      ${pct >= 80 ? `<p class="small">${esc(t('cloud.nearLimit'))}</p>` : ''}
+      <details class="danger-zone">
+        <summary>${esc(t('cloud.deleteTitle'))}</summary>
+        <p class="small">${esc(t('cloud.deleteHelp'))}</p>
+        <button class="danger" data-act="deleteAccount">${esc(t('cloud.deleteAccount'))}</button>
+      </details>
+    </section>
+    ${cloud.isAdmin() ? renderAdmin() : ''}`;
+}
+
+function renderAdmin() {
+  const s = sync.admin;
+  const kb = n => (n / 1024).toLocaleString(LOCALE[lang], { maximumFractionDigits: 1 });
+  return `<section class="panel">
+      <h3>${esc(t('admin.title'))}</h3>
+      ${s ? `<dl class="stats">
+        <dt>${esc(t('admin.registered'))}</dt><dd>${s.registeredUsers ?? '-'}</dd>
+        <dt>${esc(t('admin.stored'))}</dt><dd>${s.storedBudgets}</dd>
+        <dt>${esc(t('admin.total'))}</dt><dd>${esc(t('admin.kb', kb(s.totalBytes)))}</dd>
+        <dt>${esc(t('admin.average'))}</dt><dd>${s.storedBudgets ? esc(t('admin.kb', kb(s.totalBytes / s.storedBudgets))) : '-'}</dd>
+      </dl>` : `<p class="small muted">${esc(t('admin.loading'))}</p>`}
+      <div class="actions left"><button data-act="adminRefresh">${esc(t('admin.refresh'))}</button></div>
+      <p class="small muted">${esc(t('admin.privacy'))}</p>
     </section>`;
 }
+
+function loadAdmin() {
+  cloud.adminStats()
+    .then(s => { sync.admin = s; })
+    .catch(e => { sync.msg = { key: e.key, args: e.args, message: e.message }; })
+    .finally(render);
+}
+
+function renderArchive() {
+  const thisYear = today.getFullYear(), keepFrom = thisYear - view.keepYears;
+  const cutoff = fmtDate(`${keepFrom}-01-01`);
+  const p = core.rotationPreview(budget, keepFrom);
+  const n = p.tx + p.planYears + p.balances;
+  return `<section class="panel">
+      <h3>${esc(t('archive.title'))}</h3>
+      <p class="small muted">${esc(t('archive.help'))}</p>
+      <label>${esc(t('archive.keep'))}
+        <select id="keepYears">${[2, 3].map(y =>
+          `<option value="${y}" ${y === view.keepYears ? 'selected' : ''}>${esc(t('archive.keepOpt', y, keepFromLabel(thisYear - y)))}</option>`).join('')}</select>
+      </label>
+      <p class="small">${esc(n ? t('archive.preview', p.tx, p.planYears, p.balances, cutoff) : t('archive.nothing', cutoff))}</p>
+      <div class="actions left">
+        <button data-act="archive">${esc(t('archive.download'))}</button>
+        <button class="danger" data-act="rotate" ${n && view.archived ? '' : 'disabled'}>${esc(t('archive.rotate'))}</button>
+      </div>
+      ${n && !view.archived ? `<p class="small muted">${esc(t('archive.downloadFirst'))}</p>` : ''}
+    </section>`;
+}
+const keepFromLabel = y => `${y}–${today.getFullYear()}`;
 
 // ---------- sync ----------
 
 function syncState() {
+  if (cloud.signedIn()) {
+    if (sync.status === 'busy') return 'busy';
+    if (sync.status === 'error') return 'error';
+    return text === ls.get(K.base) ? 'synced' : 'local';
+  }
   if (!ls.get(K.clientId)) return 'notSetUp';
   if (sync.status === 'busy') return 'busy';
   if (sync.status === 'error') return 'error';
@@ -496,13 +587,14 @@ function renderSyncButton() {
 let syncTimer = null;
 function scheduleSync() {
   clearTimeout(syncTimer);
-  if (ls.get(K.clientId) && ls.get(K.fileId) && drive.hasValidToken())
+  if (cloud.signedIn() || (ls.get(K.clientId) && ls.get(K.fileId) && drive.hasValidToken()))
     syncTimer = setTimeout(() => syncNow(), 2000);
   else renderSyncButton();
 }
 
 // sync.msg is either an i18n key (string) or an error object with key/args.
 async function syncNow() {
+  if (cloud.signedIn()) return cloudSyncNow();
   const clientId = ls.get(K.clientId);
   if (!clientId) { view.tab = 'sync'; render(); return; }
   if (sync.status === 'busy') return;
@@ -544,6 +636,59 @@ async function syncNow() {
     sync.msg = { key: e.key, args: e.args, message: e.message };
   }
   render();
+}
+
+// Same algorithm as Drive above, against /api/budget. The server's version check replaces
+// Drive's metadata check: a 409 means another device saved first, so fetch, merge and retry.
+async function cloudSyncNow() {
+  if (sync.status === 'busy') return;
+  sync.status = 'busy'; sync.msg = ''; render();
+  try {
+    for (let attempt = 0; ; attempt++) {
+      const local = text;
+      const base = ls.get(K.base); // null = never synced with the cloud from this device
+      core.checkStorable(local);
+      const remote = await cloud.get();
+      let result, version;
+      try {
+        if (!remote) {
+          version = (await cloud.put(local, null)).version;
+          result = local;
+          sync.msg = 'cloud.created';
+        } else if (String(remote.version) === ls.get(K.version)) {
+          result = local; version = remote.version;
+          if (local !== base) version = (await cloud.put(local, remote.version)).version;
+        } else {
+          result = local === base ? remote.text : core.merge(base, local, remote.text);
+          version = remote.version;
+          if (result !== remote.text) version = (await cloud.put(result, remote.version)).version;
+          if (result !== local) setText(result);
+          if (local !== base && result !== remote.text) sync.msg = 'sync.merged';
+        }
+      } catch (e) {
+        if (e.key === 'cloudConflict' && attempt < 3) continue;
+        throw e;
+      }
+      ls.set(K.version, String(version));
+      ls.set(K.base, result);
+      ls.set(K.lastSync, String(Date.now()));
+      break;
+    }
+    sync.status = 'idle';
+    if (text !== ls.get(K.base)) scheduleSync();
+  } catch (e) {
+    sync.status = 'error';
+    sync.msg = { key: e.key, args: e.args, message: e.message };
+  }
+  render();
+}
+
+function downloadText(s, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([s], { type: 'text/plain' }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 // ---------- events ----------
@@ -646,14 +791,43 @@ const actions = {
     drive.signOut();
     [K.fileId, K.version, K.base, K.lastSync].forEach(k => ls.set(k, null));
   },
-  download() {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
-    a.download = 'budget.txt';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  download() { downloadText(text, 'budget.txt'); return false; },
+  cloudSignIn(el) {
+    if (ls.get(K.fileId) && !confirm(t('ask.cloudReplacesDrive'))) return false;
+    cloud.signIn(el.dataset.provider).catch(e => {
+      sync.status = 'error'; sync.msg = { key: e.key, args: e.args, message: e.message }; render();
+    });
     return false;
   },
+  cloudSignOut() {
+    if (!confirm(t('ask.cloudSignOut'))) return false;
+    cloud.signOut();
+    [K.version, K.base, K.lastSync].forEach(k => ls.set(k, null));
+    Object.assign(sync, { status: 'idle', msg: '', admin: null });
+  },
+  deleteAccount() {
+    if (!confirm(t('ask.deleteAccount'))) return false;
+    sync.status = 'busy'; render();
+    cloud.deleteAccount()
+      .then(() => {
+        [K.version, K.base, K.lastSync].forEach(k => ls.set(k, null));
+        Object.assign(sync, { status: 'idle', msg: 'cloud.deleted', admin: null });
+        alert(t('cloud.deleted'));
+      })
+      .catch(e => { sync.status = 'error'; sync.msg = { key: e.key, args: e.args, message: e.message }; })
+      .finally(render);
+    return false;
+  },
+  archive() { downloadText(text, `budget-${todayStr}.txt`); view.archived = true; },
+  rotate() {
+    const keepFrom = today.getFullYear() - view.keepYears;
+    if (!confirm(t('ask.rotate', fmtDate(`${keepFrom}-01-01`)))) return false;
+    core.rotate(budget, keepFrom);
+    view.archived = false;
+    commit();
+    return false;
+  },
+  adminRefresh() { sync.admin = null; loadAdmin(); },
 };
 
 main.addEventListener('click', e => {
@@ -721,6 +895,9 @@ main.addEventListener('change', e => {
     commit();
   } else if (el.id === 'currency') {
     if (/^[A-Za-z]{3}$/.test(el.value)) { budget.currency = el.value.toUpperCase(); fmtCache = {}; commit(); }
+  } else if (el.id === 'keepYears') {
+    view.keepYears = +el.value;
+    render();
   } else if (el.id === 'clientId') {
     ls.set(K.clientId, el.value.trim() || null);
     render();
@@ -734,7 +911,8 @@ main.addEventListener('change', e => {
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && drive.hasValidToken() && ls.get(K.fileId)) syncNow();
+  if (document.visibilityState !== 'visible') return;
+  if (cloud.signedIn() || (drive.hasValidToken() && ls.get(K.fileId))) syncNow();
 });
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:')
@@ -742,4 +920,26 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:')
 
 setLang(lang, false);
 render();
-if (drive.hasValidToken() && ls.get(K.fileId)) syncNow();
+startCloud();
+
+// Returning from the sign-in page, or already signed in to the cloud on this device.
+async function startCloud() {
+  const r = await cloud.handleRedirect();
+  if (r === 'signedIn') {
+    // The cloud replaces Drive sync on this device; the first sync merges as a union.
+    drive.signOut();
+    [K.fileId, K.version, K.base, K.lastSync].forEach(k => ls.set(k, null));
+    view.tab = 'sync';
+  } else if (r === 'error') {
+    Object.assign(sync, { status: 'error', msg: 'cloud.signInFailed' });
+    view.tab = 'sync';
+  }
+  if (cloud.signedIn()) {
+    try { await cloud.refreshSession(); } catch { /* shown by the sync below */ }
+    if (cloud.isAdmin()) loadAdmin();
+    syncNow();
+  } else {
+    render();
+    if (drive.hasValidToken() && ls.get(K.fileId)) syncNow();
+  }
+}

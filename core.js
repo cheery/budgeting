@@ -393,3 +393,50 @@ export function balanceInMonth(b, year, m) {
   const d = Object.keys(b.balances || {}).filter(k => k.startsWith(prefix)).sort().pop();
   return d ? { date: d, amount: b.balances[d] } : null;
 }
+
+// ---------- cloud storage checks ----------
+
+// The cloud copy is limited in size, and the server only accepts text this program can read.
+// The same function runs in the browser (before upload) and on the server (on every save).
+export const MAX_STORED_BYTES = 256 * 1024;
+
+export function checkStorable(text) {
+  if (typeof text !== 'string') fail('storeInvalid', [0], 'Budget must be text');
+  const bytes = new TextEncoder().encode(text).length;
+  if (bytes > MAX_STORED_BYTES)
+    fail('storeTooLarge', [Math.ceil(bytes / 1024), MAX_STORED_BYTES / 1024], `Budget is ${bytes} bytes`);
+  // Tabs and line breaks are fine; other control characters never come from the app.
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]|[\uD800-\uDFFF]/u.test(text))
+    fail('storeInvalid', [0], 'Budget contains control characters');
+  const bad = parse(text).errors.find(e => !e.warn);
+  if (bad) fail('storeInvalid', [bad.line], `Line ${bad.line}: ${bad.msg}`);
+  return bytes;
+}
+
+// ---------- archive rotation ----------
+
+// What rotate(b, keepFrom) would remove: everything dated before Jan 1 of keepFrom.
+export function rotationPreview(b, keepFrom) {
+  const cutoff = `${keepFrom}-01-01`;
+  return {
+    tx: b.tx.filter(t => t.date < cutoff).length,
+    planYears: Object.keys(b.plans).filter(y => y < String(keepFrom)).length,
+    balances: Object.keys(b.balances || {}).filter(d => d < cutoff).length,
+  };
+}
+
+// Removes transactions, plans and balance entries from before keepFrom (a year). Categories stay.
+// If old balance entries anchored the running balance, a balance entry on Jan 1 of keepFrom
+// carries the actual balance forward, so the kept years' actual cumulative rows do not change.
+export function rotate(b, keepFrom) {
+  const year = String(keepFrom), cutoff = `${year}-01-01`;
+  const oldBalances = Object.keys(b.balances || {}).filter(d => d < cutoff);
+  let carry = null;
+  if (oldBalances.length && !(cutoff in b.balances))
+    carry = runningBalance(b, String(+year - 1)).actual[11];
+  b.tx = b.tx.filter(t => t.date >= cutoff);
+  for (const y of Object.keys(b.plans)) if (y < year) delete b.plans[y];
+  for (const d of oldBalances) delete b.balances[d];
+  if (carry !== null) b.balances[cutoff] = carry;
+  return b;
+}

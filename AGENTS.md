@@ -21,7 +21,27 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
   SCP. Its validation CNAMEs are in the DNS template; keep them or renewal fails. `www` redirects to
   the apex (CloudFront Function) so there is only one origin, because localStorage is per origin.
   When updating the `enno-hosting` stack, pass `DomainName` and `CertificateArn` again, or the
-  domain is removed.
+  domain is removed (likewise `ApiDomainName` and `AuthOrigin` once the cloud API is live).
+
+## Cloud storage (`cloud.js`, `server/`, `infra/ennakkoon-api.yaml`)
+
+- **Opt-in.** Users sign in with a social provider (Cognito, OAuth code + PKCE, no passwords) and
+  `budget.txt` is stored in DynamoDB in eu-north-1. Never replicate it to another Region.
+  `privacy.html` describes exactly what is stored; update it when that changes.
+- **The server runs `core.checkStorable()`** (size limit `MAX_STORED_BYTES` + the text format) on
+  every save, the same function the app runs before upload. Keep validation in `core.js`, not
+  in the handler, so both sides agree. The Lambda zip is `server/handler.mjs` + `core.js`
+  (`scripts/package-api.sh`); deploy with `npm run deploy:api`.
+- **The user is the token's `sub`, nothing else.** No route may take a user id from the request,
+  and the admin route returns totals only (never ids, emails or content).
+- Cloud sync uses the same base/version/merge rules as Drive (`cloudSyncNow` in `app.js`). Only
+  one sync method is active per device: signing in to the cloud turns Drive sync off.
+- **Archive & rotate** (`core.rotate`) removes whole years before a cutoff and carries the actual
+  balance forward with a `balance` entry, so kept years' actual rows don't change. It is enabled
+  only after the user downloads an archive, and it is undoable.
+- `cloud.js` `CONFIG` (auth domain, client id) comes from the `ennakkoon-api` stack outputs. With
+  an empty client id, or on any origin other than https://ennakkoon.fi, the cloud UI is hidden.
+- The service worker must never cache `/api/`.
 
 ## Things learned the hard way
 

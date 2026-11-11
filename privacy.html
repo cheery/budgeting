@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f6f5c">
+  <title>Tietosuojaseloste – ennakkoon.fi</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1><a href="./">ennakkoon.fi</a></h1>
+  </header>
+  <main class="legal">
+    <p class="small"><a href="#en">In English</a></p>
+
+    <h2>Tietosuojaseloste</h2>
+    <p class="muted small">Päivitetty 11.11.2026</p>
+
+    <h3>Rekisterinpitäjä</h3>
+    <p>ValueShare Oy (Y-tunnus 3639046-9)<br>
+      Tommilantie 3 A 1, 36270 Kangasala<br>
+      Tietosuoja-asiat: <a href="mailto:janne@valueshare.fi">janne@valueshare.fi</a> · <a href="https://valueshare.fi/">valueshare.fi</a></p>
+
+    <h3>Lyhyesti</h3>
+    <ul>
+      <li>Sovellus toimii ilman tiliä. Silloin budjettisi on vain omalla laitteellasi, eikä siitä lähde meille mitään.</li>
+      <li>Jos otat käyttöön ennakkoon.fi-pilven, budjettisi tallennetaan Tukholmaan (Ruotsi, EU) ja synkronoidaan laitteidesi välillä.</li>
+      <li>Palvelu näyttää budjettisi vain sinulle. Ylläpito näkee vain yhteismäärät: käyttäjien määrän ja käytetyn tallennustilan.</li>
+      <li>Voit poistaa tilisi ja pilvidatasi itse milloin tahansa.</li>
+    </ul>
+
+    <h3>Mitä tietoja käsittelemme</h3>
+    <p><b>Ilman pilveä:</b> budjetti tallentuu selaimesi omaan tallennustilaan (localStorage). Jos käytät Google Drive -synkronointia, budjetti tallentuu omaan Google Driveesi; emme näe sitä.</p>
+    <p><b>ennakkoon.fi-pilvi</b> (vapaaehtoinen):</p>
+    <ul>
+      <li>Kirjautumistiedot: käyttäjätunniste ja kirjautumispalvelun (esim. Google) sinulle antama tunniste sekä sähköpostiosoitteesi. Emme saa salasanaasi.</li>
+      <li>Budjettitiedostosi (budget.txt), sen koko, versio ja viimeisin tallennusaika.</li>
+      <li>Tekniset lokit: pyynnön aika, tyyppi, tila ja IP-osoite. Budjetin sisältöä ei kirjata lokeihin.</li>
+    </ul>
+
+    <h3>Käsittelyn tarkoitus ja peruste</h3>
+    <p>Tallennamme ja synkronoimme budjettisi, koska pyydät sitä ottamalla pilven käyttöön (palvelun tarjoaminen, EU:n tietosuoja-asetus 6 artikla 1 b). Teknisiä lokeja käytämme palvelun turvallisuuden ja toimivuuden varmistamiseen (oikeutettu etu, 6 artikla 1 f). Emme käytä tietoja markkinointiin, profilointiin tai mainontaan, emmekä myy tai luovuta niitä.</p>
+
+    <h3>Missä tiedot ovat ja kuka niitä käsittelee</h3>
+    <ul>
+      <li>Pilvidata säilytetään Amazon Web Servicesin palvelimilla Tukholmassa (AWS-alue eu-north-1). Emme kopioi tai siirrä sitä muille alueille. AWS toimii henkilötietojen käsittelijänä.</li>
+      <li>Kirjautumisen hoitaa Amazon Cognito samalla alueella. Kun kirjaudut Googlella, Google käsittelee kirjautumisen omien ehtojensa mukaisesti; Google ei saa budjettiasi.</li>
+      <li>Tiedot salataan tallennettaessa (AWS KMS) ja siirrossa (HTTPS).</li>
+      <li>Palvelu tarkistaa jokaisen tallennuksen: se hyväksyy vain sovelluksen budjettimuodon ja enintään 256 kt kokoisen tiedoston.</li>
+    </ul>
+
+    <h3>Kuka näkee budjettisi</h3>
+    <p>Palvelu antaa budjettisi vain sinun tunnuksellesi. Ylläpitonäkymä näyttää ainoastaan yhteismäärät. ValueShare Oy:n ylläpitäjillä on teknisesti pääsy palvelun AWS-ympäristöön, kuten minkä tahansa verkkopalvelun ylläpitäjillä. Emme avaa käyttäjien budjetteja, ja ympäristöön tehdyt toimenpiteet kirjautuvat AWS:n lokeihin.</p>
+
+    <h3>Säilytysaika</h3>
+    <ul>
+      <li>Budjetti ja tili säilyvät, kunnes poistat ne.</li>
+      <li>Tilin poisto (Synkronointi-välilehti → Poista tili) poistaa tilin ja pilvessä olevan budjetin heti. Tietokannan varmuuskopiot poistuvat viimeistään 35 päivän kuluttua.</li>
+      <li>Tekniset lokit poistuvat 30 päivän kuluttua.</li>
+    </ul>
+
+    <h3>Oikeutesi</h3>
+    <p>Sinulla on oikeus tarkastaa ja ladata tietosi (Synkronointi → Lataa budget.txt), oikaista ne, poistaa ne, siirtää ne toiseen palveluun ja vastustaa käsittelyä. Voit tehdä useimmat näistä itse sovelluksessa; muissa asioissa ota yhteyttä yllä olevaan osoitteeseen. Voit myös tehdä valituksen tietosuojavaltuutetulle (<a href="https://tietosuoja.fi/">tietosuoja.fi</a>).</p>
+
+    <h3>Evästeet ja seuranta</h3>
+    <p>Emme käytä seurantaa, analytiikkaa tai mainoksia. Sovellus käyttää selaimen tallennustilaa vain omaan toimintaansa (budjetti, asetukset ja kirjautuminen).</p>
+
+    <hr>
+
+    <h2 id="en" lang="en">Privacy policy</h2>
+    <div lang="en">
+      <p class="muted small">Updated 11 November 2026</p>
+
+      <h3>Controller</h3>
+      <p>ValueShare Oy (business ID 3639046-9)<br>
+        Tommilantie 3 A 1, 36270 Kangasala, Finland<br>
+        Privacy contact: <a href="mailto:janne@valueshare.fi">janne@valueshare.fi</a> · <a href="https://valueshare.fi/">valueshare.fi</a></p>
+
+      <h3>In short</h3>
+      <ul>
+        <li>The app works without an account. Your budget then stays on your own device and nothing is sent to us.</li>
+        <li>If you turn on the ennakkoon.fi cloud, your budget is stored in Stockholm (Sweden, EU) and synced between your devices.</li>
+        <li>The service shows your budget only to you. Administrators see only totals: the number of users and the storage used.</li>
+        <li>You can delete your account and cloud data yourself at any time.</li>
+      </ul>
+
+      <h3>What we process</h3>
+      <p><b>Without the cloud:</b> the budget is kept in your browser's storage (localStorage). If you use Google Drive sync, it is stored in your own Google Drive; we cannot see it.</p>
+      <p><b>ennakkoon.fi cloud</b> (optional):</p>
+      <ul>
+        <li>Sign-in data: a user id, the id given by the sign-in provider (e.g. Google), and your email address. We never receive your password.</li>
+        <li>Your budget file (budget.txt), its size, version and last save time.</li>
+        <li>Technical logs: request time, type, status and IP address. Budget content is never logged.</li>
+      </ul>
+
+      <h3>Purpose and legal basis</h3>
+      <p>We store and sync your budget because you ask for it by turning on the cloud (providing the service, GDPR Art. 6(1)(b)). Technical logs keep the service secure and working (legitimate interest, Art. 6(1)(f)). We do not use the data for marketing, profiling or advertising, and we do not sell or share it.</p>
+
+      <h3>Where the data is and who processes it</h3>
+      <ul>
+        <li>Cloud data is kept on Amazon Web Services servers in Stockholm (AWS Region eu-north-1). We do not copy or move it to other regions. AWS acts as our processor.</li>
+        <li>Sign-in is handled by Amazon Cognito in the same region. When you sign in with Google, Google handles the sign-in under its own terms; Google does not receive your budget.</li>
+        <li>Data is encrypted at rest (AWS KMS) and in transit (HTTPS).</li>
+        <li>Every save is checked: only the app's budget format and files up to 256 kB are accepted.</li>
+      </ul>
+
+      <h3>Who can see your budget</h3>
+      <p>The service gives your budget only to your account. The administration view shows totals only. ValueShare Oy's administrators technically have access to the service's AWS environment, as administrators of any online service do. We do not open users' budgets, and actions in the environment are recorded in AWS logs.</p>
+
+      <h3>Retention</h3>
+      <ul>
+        <li>Your budget and account are kept until you delete them.</li>
+        <li>Deleting your account (Sync tab → Delete account) removes the account and the cloud budget immediately. Database backups are erased within 35 days.</li>
+        <li>Technical logs are deleted after 30 days.</li>
+      </ul>
+
+      <h3>Your rights</h3>
+      <p>You have the right to access and download your data (Sync → Download budget.txt), to correct it, delete it, move it to another service, and object to processing. You can do most of this yourself in the app; for anything else, contact us at the address above. You can also lodge a complaint with the Finnish Data Protection Ombudsman (<a href="https://tietosuoja.fi/en/">tietosuoja.fi</a>).</p>
+
+      <h3>Cookies and tracking</h3>
+      <p>We use no tracking, analytics or ads. The app uses browser storage only for its own functions (budget, settings and sign-in).</p>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <a href="https://valueshare.fi/" target="_blank" rel="noopener">ValueShare Oy</a>
+  </footer>
+</body>
+</html>

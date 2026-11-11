@@ -17,9 +17,20 @@ Parameters:
     Type: String
     Default: ''
     Description: ACM certificate in us-east-1 covering DomainName and www.DomainName.
+  ApiDomainName:
+    Type: String
+    Default: ''
+    Description: >-
+      HTTP API domain from the ennakkoon-api stack (xxxx.execute-api.eu-north-1.amazonaws.com).
+      Served at /api/* on the same origin. Empty = no cloud storage API.
+  AuthOrigin:
+    Type: String
+    Default: ''
+    Description: Cognito domain origin the app calls for tokens (https://<prefix>.auth.eu-north-1.amazoncognito.com).
 
 Conditions:
   HasDomain: !Not [!Equals [!Ref DomainName, '']]
+  HasApi: !Not [!Equals [!Ref ApiDomainName, '']]
 
 Resources:
   WwwRedirect:
@@ -141,11 +152,11 @@ Resources:
             Override: true
           ContentSecurityPolicy:
             Override: true
-            ContentSecurityPolicy: >-
+            ContentSecurityPolicy: !Sub >-
               default-src 'self';
               script-src 'self' https://accounts.google.com/gsi/client;
               style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style;
-              connect-src 'self' https://www.googleapis.com https://accounts.google.com/gsi/;
+              connect-src 'self' https://www.googleapis.com https://accounts.google.com/gsi/ ${AuthOrigin};
               frame-src https://accounts.google.com/gsi/;
               img-src 'self' data:;
               object-src 'none'; base-uri 'self'; frame-ancestors 'none'
@@ -176,6 +187,27 @@ Resources:
             OriginAccessControlId: !GetAtt OriginAccessControl.Id
             S3OriginConfig:
               OriginAccessIdentity: ''
+          - !If
+            - HasApi
+            - Id: api
+              DomainName: !Ref ApiDomainName
+              CustomOriginConfig:
+                OriginProtocolPolicy: https-only
+                OriginSSLProtocols: [TLSv1.2]
+            - !Ref AWS::NoValue
+        # Cloud storage API: never cached, Authorization header and body passed through.
+        CacheBehaviors: !If
+          - HasApi
+          - - PathPattern: /api/*
+              TargetOriginId: api
+              ViewerProtocolPolicy: https-only
+              AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+              Compress: true
+              # Managed-CachingDisabled and Managed-AllViewerExceptHostHeader.
+              CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+              OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+              ResponseHeadersPolicyId: !Ref SecurityHeaders
+          - !Ref AWS::NoValue
         DefaultCacheBehavior:
           TargetOriginId: s3-site
           ViewerProtocolPolicy: redirect-to-https

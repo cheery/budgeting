@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/core.test.mjs",
+    "test": "node --test test/*.test.mjs",
     "start": "python3 -m http.server 8000",
-    "deploy": "bash scripts/deploy.sh"
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:api": "bash scripts/deploy-api.sh"
   },
   "license": "MIT"
 }

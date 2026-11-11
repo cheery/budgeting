@@ -1,0 +1,313 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  ennakkoon.fi opt-in cloud storage: Cognito sign-in (social providers only), an HTTP API with a
+  JWT authorizer, a Lambda that validates every budget with core.js, and a DynamoDB table. All in
+  the project Region (eu-north-1); budget data is not replicated anywhere else.
+
+Parameters:
+  CodeBucket:
+    Type: String
+    Description: Artifact bucket (stack ennakkoon-artifacts).
+  CodeKey:
+    Type: String
+    Description: Key of the Lambda zip (server/handler.mjs + core.js), e.g. api/<hash>.zip
+  AppUrl:
+    Type: String
+    Default: https://ennakkoon.fi/
+    Description: The app's address; OAuth sign-in returns here.
+  AuthDomainPrefix:
+    Type: String
+    Default: ennakkoon
+    Description: Cognito domain prefix (<prefix>.auth.<region>.amazoncognito.com).
+  GoogleSecretArn:
+    Type: String
+    Default: ''
+    Description: >-
+      Secrets Manager secret with JSON {"client_id": "...", "client_secret": "..."} of the Google
+      OAuth client used by Cognito. Empty = Google sign-in not configured yet.
+
+Conditions:
+  HasGoogle: !Not [!Equals [!Ref GoogleSecretArn, '']]
+
+Resources:
+  # ---------- data ----------
+
+  BudgetTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          One item per user (pk = user#<cognito sub>) holding budget.txt, plus one "stats" item
+          with totals for the admin view.
+        must: >-
+          Stay in eu-north-1, no global tables / replication. Point-in-time recovery keeps deleted
+          data for up to 35 days; the privacy policy (privacy.html) says so.
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      DeletionProtectionEnabled: true
+
+  # ---------- sign-in ----------
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          Users sign in only through social providers (no passwords). Admin-only creation blocks
+          email/password sign-up; federated sign-in still creates users.
+    Properties:
+      UserPoolName: ennakkoon-users
+      UserPoolTier: ESSENTIALS
+      DeletionProtection: ACTIVE
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: admin_only
+            Priority: 1
+      UsernameConfiguration:
+        CaseSensitive: false
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref UserPool
+      Domain: !Ref AuthDomainPrefix
+
+  GoogleProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Condition: HasGoogle
+    Properties:
+      UserPoolId: !Ref UserPool
+      ProviderName: Google
+      ProviderType: Google
+      ProviderDetails:
+        client_id: !Sub '{{resolve:secretsmanager:${GoogleSecretArn}:SecretString:client_id}}'
+        client_secret: !Sub '{{resolve:secretsmanager:${GoogleSecretArn}:SecretString:client_secret}}'
+        authorize_scopes: openid email
+      AttributeMapping:
+        email: email
+        username: sub
+
+  AppClient:
+    Type: AWS::Cognito::UserPoolClient
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          Public browser client: no secret, authorization code + PKCE. Short access tokens,
+          rotating refresh tokens that can be revoked.
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: ennakkoon-web
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows: [code]
+      AllowedOAuthScopes: [openid, email]
+      CallbackURLs: [!Ref AppUrl, 'http://localhost:8000/']
+      LogoutURLs: [!Ref AppUrl, 'http://localhost:8000/']
+      SupportedIdentityProviders: !If [HasGoogle, [!Ref GoogleProvider], [COGNITO]]
+      ExplicitAuthFlows: [ALLOW_USER_SRP_AUTH]
+      RefreshTokenRotation:
+        Feature: ENABLED
+        RetryGracePeriodSeconds: 30
+      EnableTokenRevocation: true
+      PreventUserExistenceErrors: ENABLED
+      AccessTokenValidity: 15
+      IdTokenValidity: 15
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      UserPoolId: !Ref UserPool
+      GroupName: admin
+      Description: Sees user and storage totals (never budget content).
+
+  # ---------- API ----------
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/ennakkoon-api
+      RetentionInDays: 30
+
+  AccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/apigateway/ennakkoon-api
+      RetentionInDays: 30
+
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: ennakkoon-api
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: Budgets
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:ConditionCheckItem
+                Resource: !GetAtt BudgetTable.Arn
+              - Sid: Users
+                Effect: Allow
+                Action:
+                  - cognito-idp:AdminDeleteUser
+                  - cognito-idp:DescribeUserPool
+                Resource: !GetAtt UserPool.Arn
+              - Sid: Logs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt ApiLogGroup.Arn
+
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ennakkoon-api
+      Runtime: nodejs22.x
+      Architectures: [arm64]
+      Handler: server/handler.handler
+      MemorySize: 256
+      Timeout: 10
+      Role: !GetAtt ApiRole.Arn
+      Code:
+        S3Bucket: !Ref CodeBucket
+        S3Key: !Ref CodeKey
+      LoggingConfig:
+        LogGroup: !Ref ApiLogGroup
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref BudgetTable
+          USER_POOL_ID: !Ref UserPool
+
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: ennakkoon-api
+      ProtocolType: HTTP
+      Description: Reached through CloudFront at https://ennakkoon.fi/api/ (same origin, no CORS).
+
+  Authorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref HttpApi
+      Name: cognito
+      AuthorizerType: JWT
+      IdentitySource: ['$request.header.Authorization']
+      JwtConfiguration:
+        Audience: [!Ref AppClient]
+        Issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}'
+
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ApiFunction.Arn
+      PayloadFormatVersion: '2.0'
+
+  RouteGetBudget:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /api/budget
+      AuthorizationType: JWT
+      AuthorizerId: !Ref Authorizer
+      Target: !Sub 'integrations/${Integration}'
+
+  RoutePutBudget:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: PUT /api/budget
+      AuthorizationType: JWT
+      AuthorizerId: !Ref Authorizer
+      Target: !Sub 'integrations/${Integration}'
+
+  RouteDeleteAccount:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: DELETE /api/account
+      AuthorizationType: JWT
+      AuthorizerId: !Ref Authorizer
+      Target: !Sub 'integrations/${Integration}'
+
+  RouteAdminStats:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /api/admin/stats
+      AuthorizationType: JWT
+      AuthorizerId: !Ref Authorizer
+      Target: !Sub 'integrations/${Integration}'
+
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+      AccessLogSettings:
+        DestinationArn: !GetAtt AccessLogGroup.Arn
+        Format: '{"requestId":"$context.requestId","time":"$context.requestTime","route":"$context.routeKey","status":"$context.status","authError":"$context.authorizer.error","ip":"$context.identity.sourceIp","latency":"$context.responseLatency"}'
+
+  InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*'
+
+Outputs:
+  ApiDomainName:
+    Value: !Sub '${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+  UserPoolId:
+    Value: !Ref UserPool
+  ClientId:
+    Value: !Ref AppClient
+  AuthDomain:
+    Value: !Sub '${AuthDomainPrefix}.auth.${AWS::Region}.amazoncognito.com'
+  GoogleRedirectUri:
+    Description: Add this to the Google OAuth client's authorized redirect URIs.
+    Value: !Sub 'https://${AuthDomainPrefix}.auth.${AWS::Region}.amazoncognito.com/oauth2/idpresponse'

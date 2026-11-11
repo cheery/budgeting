@@ -223,3 +223,52 @@ plan 2027 Food 900 all
   assert.equal(r.anchored[0], true);
   assert.deepEqual(core.balanceInMonth(core.parse(mid).budget, '2026', 4), { date: '2026-05-10', amount: 500 });
 });
+
+test('cloud storage check accepts the app format only', () => {
+  assert.equal(core.checkStorable(SAMPLE), new TextEncoder().encode(SAMPLE).length);
+  const err = (s) => { try { core.checkStorable(s); } catch (e) { return [e.key, e.args]; } return null; };
+  assert.deepEqual(err('hello world\n'), ['storeInvalid', [1]]);
+  assert.deepEqual(err(SAMPLE + 'plan 2026 Groceries x all\n'), ['storeInvalid', [12]]);
+  assert.equal(err('currency EUR\n\u0000')[0], 'storeInvalid');
+  assert.equal(err(42)[0], 'storeInvalid');
+  assert.equal(err('# ' + 'x'.repeat(core.MAX_STORED_BYTES))[0], 'storeTooLarge');
+  // An undeclared category is only a warning, so it can still be stored.
+  assert.ok(core.checkStorable('2026-01-01 Food 5\n') > 0);
+});
+
+test('rotation removes old years and keeps the kept years\' actual balance', () => {
+  const text = `currency EUR
+category Salary income
+category Rent expense certain
+category Food expense
+balance 2023-06-15 1000
+plan 2023 Salary 3000 all
+plan 2023 Rent 900 all
+plan 2024 Salary 3100 all
+plan 2024 Rent 950 all
+plan 2025 Salary 3200 all
+plan 2025 Rent 1000 all
+2023-06-01 Food 20
+2023-07-03 Food 300
+2024-02-10 Food 250
+2025-01-05 Food 80
+2025-03-01 Salary 3200
+`;
+  const b = core.parse(text).budget;
+  const before = core.runningBalance(b, '2025').actual;
+  assert.deepEqual(core.rotationPreview(b, 2025), { tx: 3, planYears: 2, balances: 1 });
+  core.rotate(b, 2025);
+  assert.deepEqual(b.tx.map(t => t.date), ['2025-01-05', '2025-03-01']);
+  assert.deepEqual(Object.keys(b.plans), ['2025']);
+  assert.deepEqual(Object.keys(b.balances), ['2025-01-01']);
+  assert.deepEqual(core.runningBalance(b, '2025').actual, before);
+  assert.equal(b.categories.length, 3);
+  // Without balance entries every year starts from 0, so nothing needs carrying.
+  const c = core.parse(SAMPLE + '2024-05-01 Groceries 10\n').budget;
+  core.rotate(c, 2025);
+  assert.deepEqual(c.balances, {});
+  assert.equal(c.tx.length, 3);
+  // The rotated text still syncs: a 3-way merge drops the old lines on the other device too.
+  const rotated = core.serialize(b);
+  assert.equal(core.merge(text, text, rotated), rotated);
+});

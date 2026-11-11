@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Public DNS zone for ennakkoon.fi (budget PWA). The domain is registered at a Finnish registrar
+  and delegated to the name servers of this zone. Deploy in the project Region (eu-north-1);
+  Route 53 itself is global.
+
+Parameters:
+  DistributionDomainName:
+    Type: String
+    Default: ''
+    Description: >-
+      CloudFront domain of the enno-hosting stack (e.g. d1234.cloudfront.net). Empty = no site
+      records yet (used before the distribution has the ennakkoon.fi aliases).
+
+Conditions:
+  HasDistribution: !Not [!Equals [!Ref DistributionDomainName, '']]
+
+Mappings:
+  CloudFront:
+    HostedZone:
+      Id: Z2FDTNDATAQYW2   # fixed zone ID for every CloudFront alias target
+
+Resources:
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Authoritative DNS for ennakkoon.fi; the registrar points at its name servers.
+        must: >-
+          Never replace or delete. A new zone gets new name servers and the domain stops
+          resolving until the registrar is updated.
+    Properties:
+      Name: ennakkoon.fi
+      HostedZoneConfig:
+        Comment: ennakkoon.fi (budget PWA)
+
+  # ACM DNS validation for the CloudFront certificate (us-east-1, created with the ACM API because
+  # CloudFormation is blocked in us-east-1 by the project SCP). Keep these: ACM renews with them.
+  CertValidationApex:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: _66b1075042c53a3e3ffff6afaff0d715.ennakkoon.fi.
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords: [_509e1fa77c079e143c4d6b773164c495.wzccmgtwzk.acm-validations.aws.]
+
+  CertValidationWww:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: _2f1d090f1950b8d348b5fcddf5e396f3.www.ennakkoon.fi.
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords: [_c39e23542418b6491b1f7180853c703e.wzccmgtwzk.acm-validations.aws.]
+
+  # Site records. Alias queries to CloudFront are free. www goes to the same distribution, which
+  # redirects it to the apex (one origin = one localStorage).
+  SiteRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Condition: HasDistribution
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      RecordSets:
+        - Name: ennakkoon.fi.
+          Type: A
+          AliasTarget:
+            DNSName: !Ref DistributionDomainName
+            HostedZoneId: !FindInMap [CloudFront, HostedZone, Id]
+            EvaluateTargetHealth: false
+        - Name: ennakkoon.fi.
+          Type: AAAA
+          AliasTarget:
+            DNSName: !Ref DistributionDomainName
+            HostedZoneId: !FindInMap [CloudFront, HostedZone, Id]
+            EvaluateTargetHealth: false
+        - Name: www.ennakkoon.fi.
+          Type: A
+          AliasTarget:
+            DNSName: !Ref DistributionDomainName
+            HostedZoneId: !FindInMap [CloudFront, HostedZone, Id]
+            EvaluateTargetHealth: false
+        - Name: www.ennakkoon.fi.
+          Type: AAAA
+          AliasTarget:
+            DNSName: !Ref DistributionDomainName
+            HostedZoneId: !FindInMap [CloudFront, HostedZone, Id]
+            EvaluateTargetHealth: false
+
+Outputs:
+  HostedZoneId:
+    Value: !Ref HostedZone
+  NameServers:
+    Value: !Join [', ', !GetAtt HostedZone.NameServers]

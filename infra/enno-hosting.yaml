@@ -8,7 +8,47 @@ Metadata:
   AWSToolsMetrics:
     AWSAgentToolkit: aws-cloudformation@3
 
+Parameters:
+  DomainName:
+    Type: String
+    Default: ''
+    Description: Custom domain (e.g. ennakkoon.fi). www.<domain> redirects to it. Empty = CloudFront URL only.
+  CertificateArn:
+    Type: String
+    Default: ''
+    Description: ACM certificate in us-east-1 covering DomainName and www.DomainName.
+
+Conditions:
+  HasDomain: !Not [!Equals [!Ref DomainName, '']]
+
 Resources:
+  WwwRedirect:
+    Type: AWS::CloudFront::Function
+    Condition: HasDomain
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          One origin only. localStorage is per origin, so serving the app on both www and the apex
+          would make a user's budget seem to vanish when they switch.
+    Properties:
+      Name: !Sub '${AWS::StackName}-www-redirect'
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Redirect www to the apex domain
+        Runtime: cloudfront-js-2.0
+      FunctionCode: !Sub |
+        function handler(event) {
+          var req = event.request;
+          if (req.headers.host && req.headers.host.value === 'www.${DomainName}') {
+            return {
+              statusCode: 301,
+              statusDescription: 'Moved Permanently',
+              headers: { location: { value: 'https://${DomainName}' + req.uri } }
+            };
+          }
+          return req;
+        }
+
   SiteBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -120,6 +160,16 @@ Resources:
         HttpVersion: http2and3
         IPV6Enabled: true
         PriceClass: PriceClass_100
+        Aliases: !If
+          - HasDomain
+          - [!Ref DomainName, !Sub 'www.${DomainName}']
+          - !Ref AWS::NoValue
+        ViewerCertificate: !If
+          - HasDomain
+          - AcmCertificateArn: !Ref CertificateArn
+            SslSupportMethod: sni-only
+            MinimumProtocolVersion: TLSv1.2_2021
+          - CloudFrontDefaultCertificate: true
         Origins:
           - Id: s3-site
             DomainName: !GetAtt SiteBucket.RegionalDomainName
@@ -134,6 +184,11 @@ Resources:
           # Managed-CachingOptimized. Honors the origin Cache-Control (s-maxage) set at upload time.
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
           ResponseHeadersPolicyId: !Ref SecurityHeaders
+          FunctionAssociations: !If
+            - HasDomain
+            - - EventType: viewer-request
+                FunctionARN: !GetAtt WwwRedirect.FunctionMetadata.FunctionARN
+            - !Ref AWS::NoValue
 
 Outputs:
   BucketName:
@@ -141,4 +196,6 @@ Outputs:
   DistributionId:
     Value: !Ref Distribution
   SiteUrl:
-    Value: !Sub 'https://${Distribution.DomainName}/'
+    Value: !If [HasDomain, !Sub 'https://${DomainName}/', !Sub 'https://${Distribution.DomainName}/']
+  DistributionDomainName:
+    Value: !GetAtt Distribution.DomainName

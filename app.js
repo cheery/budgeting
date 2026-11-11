@@ -477,6 +477,9 @@ function renderSync() {
         <label class="button">${esc(t('sync.import'))}<input type="file" id="importFile" accept=".txt,text/plain" hidden></label>
       </div>
       <p class="small muted">${esc(t('sync.importHelp'))}</p>
+      ${cloud.signedIn() ? '' : `<div class="actions left">
+        <button class="danger" data-act="clearDevice">${esc(t('sync.clearDevice'))}</button>
+      </div>`}
     </section>
     ${renderArchive()}`;
 }
@@ -504,6 +507,7 @@ function renderCloud(msg) {
       <div class="actions left">
         <button class="primary" data-act="sync">${esc(t('sync.now'))}</button>
         <button data-act="cloudSignOut">${esc(t('cloud.signOut'))}</button>
+        <button class="danger" data-act="clearDevice">${esc(t('cloud.signOutClear'))}</button>
       </div>
       <p class="small">${esc(t('sync.status'))}: <b>${esc(t('status.' + syncState()))}</b>${msg ? ` - ${esc(msg)}` : ''}</p>
       ${last ? `<p class="small muted">${esc(t('sync.last', new Date(+last).toLocaleString(LOCALE[lang])))}</p>` : ''}
@@ -685,6 +689,17 @@ async function cloudSyncNow() {
   render();
 }
 
+// Removes everything this app keeps in this browser (all budget.* keys: budget, sync state,
+// sign-in, settings) and starts over. The service worker cache holds only the app's own files.
+function clearDevice() {
+  if (cloud.signedIn()) cloud.signOut();
+  drive.signOut();
+  try {
+    for (const k of Object.keys(localStorage)) if (k.startsWith('budget.')) localStorage.removeItem(k);
+  } catch {}
+  location.replace(location.pathname);
+}
+
 function downloadText(s, name) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([s], { type: 'text/plain' }));
@@ -817,6 +832,22 @@ const actions = {
       })
       .catch(e => { sync.status = 'error'; sync.msg = { key: e.key, args: e.args, message: e.message }; })
       .finally(render);
+    return false;
+  },
+  clearDevice() {
+    if (!cloud.signedIn()) {
+      if (confirm(t('ask.clearLocal'))) clearDevice();
+      return false;
+    }
+    if (!confirm(t('ask.clearSignedIn'))) return false;
+    // Make sure the latest changes are in the cloud before they are removed from here.
+    (async () => {
+      if (text !== ls.get(K.base)) await cloudSyncNow();
+      if (sync.status === 'error' || text !== ls.get(K.base)) {
+        if (!confirm(t('ask.clearUnsynced'))) return;
+      }
+      clearDevice();
+    })();
     return false;
   },
   archive() { downloadText(text, `budget-${todayStr}.txt`); view.archived = true; },

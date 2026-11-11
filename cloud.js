@@ -118,7 +118,7 @@ export async function signOut() {
   forget();
   if (refresh)   // best effort: revoke so the token is useless even if it was copied
     fetch(`https://${CONFIG.authDomain}/oauth2/revoke`, {
-      method: 'POST',
+      method: 'POST', keepalive: true,   // survives a page reload right after sign-out
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ client_id: CONFIG.clientId, token: refresh }),
     }).catch(() => {});

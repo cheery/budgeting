@@ -457,12 +457,10 @@ function renderSync() {
   const clientId = ls.get(K.clientId) || '';
   const last = ls.get(K.lastSync);
   const msg = sync.msg && (typeof sync.msg === 'string' ? t(sync.msg) : errorText(t, sync.msg));
-  const usingCloud = cloud.signedIn();
   return `<h2>${esc(t('sync.title'))}</h2>
     ${renderCloud(msg)}
-    <section class="panel">
+    ${driveOn() ? `<section class="panel">
       <h3>Google Drive</h3>
-      ${usingCloud ? `<p class="small muted">${esc(t('sync.driveOff'))}</p></section>` : `
       <p class="small muted">${t('sync.driveHelp')}</p>
       <label>OAuth Client ID<input id="clientId" value="${esc(clientId)}" placeholder="xxxx.apps.googleusercontent.com"></label>
       <div class="actions left">
@@ -471,7 +469,7 @@ function renderSync() {
       </div>
       <p class="small">${esc(t('sync.status'))}: <b>${esc(t('status.' + syncState()))}</b>${msg ? ` - ${esc(msg)}` : ''}</p>
       ${last ? `<p class="small muted">${esc(t('sync.last', new Date(+last).toLocaleString(LOCALE[lang])))}</p>` : ''}
-    </section>`}
+    </section>` : ''}
     <section class="panel">
       <h3>${esc(t('sync.localFile'))}</h3>
       <div class="actions left">
@@ -482,6 +480,10 @@ function renderSync() {
     </section>
     ${renderArchive()}`;
 }
+
+// Google Drive sync is offered only where the ennakkoon.fi cloud is not (GitHub Pages copy,
+// local development). On ennakkoon.fi the cloud is the only sync option.
+const driveOn = () => !cloud.available();
 
 function renderCloud(msg) {
   if (!cloud.available()) return '';
@@ -570,7 +572,7 @@ function syncState() {
     if (sync.status === 'error') return 'error';
     return text === ls.get(K.base) ? 'synced' : 'local';
   }
-  if (!ls.get(K.clientId)) return 'notSetUp';
+  if (!driveOn() || !ls.get(K.clientId)) return 'notSetUp';
   if (sync.status === 'busy') return 'busy';
   if (sync.status === 'error') return 'error';
   if (!ls.get(K.fileId)) return 'notConnected';
@@ -587,7 +589,7 @@ function renderSyncButton() {
 let syncTimer = null;
 function scheduleSync() {
   clearTimeout(syncTimer);
-  if (cloud.signedIn() || (ls.get(K.clientId) && ls.get(K.fileId) && drive.hasValidToken()))
+  if (cloud.signedIn() || (driveOn() && ls.get(K.clientId) && ls.get(K.fileId) && drive.hasValidToken()))
     syncTimer = setTimeout(() => syncNow(), 2000);
   else renderSyncButton();
 }
@@ -596,7 +598,7 @@ function scheduleSync() {
 async function syncNow() {
   if (cloud.signedIn()) return cloudSyncNow();
   const clientId = ls.get(K.clientId);
-  if (!clientId) { view.tab = 'sync'; render(); return; }
+  if (!driveOn() || !clientId) { view.tab = 'sync'; render(); return; }
   if (sync.status === 'busy') return;
   sync.status = 'busy'; sync.msg = ''; render();
   try {
@@ -793,7 +795,6 @@ const actions = {
   },
   download() { downloadText(text, 'budget.txt'); return false; },
   cloudSignIn(el) {
-    if (ls.get(K.fileId) && !confirm(t('ask.cloudReplacesDrive'))) return false;
     cloud.signIn(el.dataset.provider).catch(e => {
       sync.status = 'error'; sync.msg = { key: e.key, args: e.args, message: e.message }; render();
     });
@@ -912,7 +913,7 @@ main.addEventListener('change', e => {
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
-  if (cloud.signedIn() || (drive.hasValidToken() && ls.get(K.fileId))) syncNow();
+  if (cloud.signedIn() || (driveOn() && drive.hasValidToken() && ls.get(K.fileId))) syncNow();
 });
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:')
@@ -926,7 +927,7 @@ startCloud();
 async function startCloud() {
   const r = await cloud.handleRedirect();
   if (r === 'signedIn') {
-    // The cloud replaces Drive sync on this device; the first sync merges as a union.
+    // Forget any Drive sync state from before; the first cloud sync merges as a union.
     drive.signOut();
     [K.fileId, K.version, K.base, K.lastSync].forEach(k => ls.set(k, null));
     view.tab = 'sync';
@@ -940,6 +941,6 @@ async function startCloud() {
     syncNow();
   } else {
     render();
-    if (drive.hasValidToken() && ls.get(K.fileId)) syncNow();
+    if (driveOn() && drive.hasValidToken() && ls.get(K.fileId)) syncNow();
   }
 }

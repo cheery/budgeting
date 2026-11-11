@@ -130,10 +130,12 @@ Resources:
     Type: AWS::CloudFront::ResponseHeadersPolicy
     Metadata:
       com.aws.cloudformation.Context:
-        why: Browser security headers. CSP allows Google Identity Services (Drive sign-in) and the Drive API.
+        why: >-
+          Browser security headers. The CSP allows only this origin plus the Cognito domain
+          (token endpoint). Google Drive sync is not offered on ennakkoon.fi, so no Google hosts.
         must: >-
-          Keep accounts.google.com/gsi and www.googleapis.com allowed or Drive sync breaks.
-          style-src needs 'unsafe-inline' because app.js renders style attributes.
+          Keep AuthOrigin in connect-src or cloud sign-in breaks. style-src needs 'unsafe-inline'
+          because app.js renders style attributes.
     Properties:
       ResponseHeadersPolicyConfig:
         Name: !Sub '${AWS::StackName}-security-headers'
@@ -154,12 +156,12 @@ Resources:
             Override: true
             ContentSecurityPolicy: !Sub >-
               default-src 'self';
-              script-src 'self' https://accounts.google.com/gsi/client;
-              style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style;
-              connect-src 'self' https://www.googleapis.com https://accounts.google.com/gsi/ ${AuthOrigin};
-              frame-src https://accounts.google.com/gsi/;
+              script-src 'self';
+              style-src 'self' 'unsafe-inline';
+              connect-src 'self' ${AuthOrigin};
+              frame-src 'none';
               img-src 'self' data:;
-              object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+              object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
 
   Distribution:
     Type: AWS::CloudFront::Distribution

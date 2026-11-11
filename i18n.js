@@ -10,7 +10,6 @@ export const STR = {
     'app.title': 'ennakkoon.fi',
     'footer.madeBy': 'Made by',
     'footer.privacy': 'Privacy',
-    'sync.driveOff': 'Cloud sync is on, so Google Drive sync is off on this device.',
     'cloud.title': 'ennakkoon.fi cloud',
     'cloud.help': 'Optional. Your budget is stored in Stockholm, Sweden (AWS eu-north-1) and synced between your devices. The service shows it to no one else; administrators see only totals (number of users and storage used). <a href="privacy.html">Privacy policy</a>', // HTML
     'cloud.signInWith': p => `Sign in with ${p}`,
@@ -110,7 +109,6 @@ export const STR = {
     'ask.rotate': d => `Remove everything dated before ${d} from the budget? Keep the archive file you downloaded. You can undo this right after.`,
     'ask.cloudSignOut': 'Sign out of the ennakkoon.fi cloud on this device? Your budget stays here and in the cloud.',
     'ask.deleteAccount': 'Delete your ennakkoon.fi account and the budget stored in the cloud? This cannot be undone. The budget on this device is kept.',
-    'ask.cloudReplacesDrive': 'Signing in to the ennakkoon.fi cloud turns off Google Drive sync on this device. Your data in Drive stays. Continue?',
     'msg.catInUse': (name, n) => `"${name}" is used on ${n} line(s) in the plan or transactions. Remove or recategorize those first.`,
     'msg.badAmount': 'Please enter a valid amount',
     'msg.catExists': 'Category exists or name is empty',
@@ -144,7 +142,6 @@ export const STR = {
     'app.title': 'ennakkoon.fi',
     'footer.madeBy': 'Tekijä:',
     'footer.privacy': 'Tietosuoja',
-    'sync.driveOff': 'Pilvisynkronointi on käytössä, joten Google Drive -synkronointi on pois päältä tällä laitteella.',
     'cloud.title': 'ennakkoon.fi-pilvi',
     'cloud.help': 'Vapaaehtoinen. Budjettisi tallennetaan Tukholmaan (AWS eu-north-1) ja synkronoidaan laitteidesi välillä. Palvelu ei näytä sitä kenellekään muulle; ylläpito näkee vain yhteismäärät (käyttäjien määrän ja käytetyn tilan). <a href="privacy.html">Tietosuojaseloste</a>', // HTML
     'cloud.signInWith': p => `Kirjaudu ${p}-tilillä`,
@@ -244,7 +241,6 @@ export const STR = {
     'ask.rotate': d => `Poistetaanko budjetista kaikki ennen päivää ${d} olevat merkinnät? Säilytä lataamasi arkistotiedosto. Voit perua tämän heti perään.`,
     'ask.cloudSignOut': 'Kirjaudutaanko ulos ennakkoon.fi-pilvestä tällä laitteella? Budjettisi säilyy täällä ja pilvessä.',
     'ask.deleteAccount': 'Poistetaanko ennakkoon.fi-tilisi ja pilveen tallennettu budjetti? Tätä ei voi perua. Tällä laitteella oleva budjetti säilyy.',
-    'ask.cloudReplacesDrive': 'Kun kirjaudut ennakkoon.fi-pilveen, Google Drive -synkronointi kytkeytyy pois tällä laitteella. Drivessa olevat tietosi säilyvät. Jatketaanko?',
     'msg.catInUse': (name, n) => `Luokkaa "${name}" käytetään ${n} rivillä suunnitelmassa tai tapahtumissa. Poista ne tai vaihda niiden luokka ensin.`,
     'msg.badAmount': 'Anna kelvollinen summa',
     'msg.catExists': 'Luokka on jo olemassa tai nimi puuttuu',

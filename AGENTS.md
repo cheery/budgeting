@@ -34,8 +34,10 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
   (`scripts/package-api.sh`); deploy with `npm run deploy:api`.
 - **The user is the token's `sub`, nothing else.** No route may take a user id from the request,
   and the admin route returns totals only (never ids, emails or content).
-- Cloud sync uses the same base/version/merge rules as Drive (`cloudSyncNow` in `app.js`). Only
-  one sync method is active per device: signing in to the cloud turns Drive sync off.
+- Cloud sync uses the same base/version/merge rules as Drive (`cloudSyncNow` in `app.js`).
+  **On ennakkoon.fi the cloud is the only sync option**; Google Drive sync is shown and run only
+  where the cloud is unavailable (GitHub Pages copy, localhost), see `driveOn()`. The owner found
+  two sync options confusing.
 - **Archive & rotate** (`core.rotate`) removes whole years before a cutoff and carries the actual
   balance forward with a `balance` entry, so kept years' actual rows don't change. It is enabled
   only after the user downloads an archive, and it is undoable.

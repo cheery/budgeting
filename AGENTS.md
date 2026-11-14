@@ -15,6 +15,11 @@ Notes for anyone (human or AI) working on this repo. See README.md for what the 
   "enno" was a working name). It is updated only by the owner running `npm run deploy` after a
   push. GitHub OIDC is blocked by the AWS project's managed SCP (`iam:*Provider*`), which is why
   there is no deploy workflow in Actions.
+- **Inventory:** `npm run inventory` (`scripts/aws-inventory.sh`) lists, read-only, every stack, its
+  resources, and anything outside the stacks (the ACM cert in us-east-1, stray buckets/functions/
+  pools). Use it to see what exists before creating or cleaning up resources. The tagging API
+  (`tag:GetResources`) is blocked by the SCP in us-east-1 and lists deleted resources, so the
+  script queries each service directly instead.
 - **Domain `ennakkoon.fi`** (registered at a Finnish registrar, DNS in Route 53 via
   `infra/ennakkoon-dns.yaml`, stack `ennakkoon-dns`). The CloudFront certificate lives in ACM
   us-east-1 and was created with the ACM API, because CloudFormation is blocked in us-east-1 by the

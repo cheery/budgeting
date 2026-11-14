@@ -6,7 +6,8 @@
     "test": "node --test test/*.test.mjs",
     "start": "python3 -m http.server 8000",
     "deploy": "bash scripts/deploy.sh",
-    "deploy:api": "bash scripts/deploy-api.sh"
+    "deploy:api": "bash scripts/deploy-api.sh",
+    "inventory": "bash scripts/aws-inventory.sh"
   },
   "license": "MIT"
 }
